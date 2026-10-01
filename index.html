@@ -1408,7 +1408,10 @@
     function closeAdminPanel(){ adminPanelOverlay.classList.remove('open'); }
     adminPanelClose.addEventListener('click', closeAdminPanel);
     adminPanelOverlay.addEventListener('click', (e) => { if (e.target === adminPanelOverlay) closeAdminPanel(); });
-    adminLogoutBtn.addEventListener('click', closeAdminPanel);
+    adminLogoutBtn.addEventListener('click', () => {
+      closeAdminPanel();
+      window.location.href = 'cemv-login.html';
+    });
 
     adminAddBtn.addEventListener('click', () => {
       collectAdminForm();
