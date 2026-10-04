@@ -363,6 +363,22 @@
   .section-head h3{font-size:27px;margin-top:8px;font-weight:700;max-width:520px;}
   .link-arrow{font-weight:600;font-size:14px;color:var(--green-700);display:inline-flex;gap:6px;align-items:center;}
   .domain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
+  .team-card{text-align:center;}
+  .team-card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:50%;margin-bottom:14px;box-shadow:var(--shadow);}
+  .team-card h4{font-size:15px;margin-bottom:4px;}
+  .team-card p{font-size:12.5px;color:var(--green-600);font-weight:600;margin-bottom:6px;}
+  .team-card .bio{font-size:12.5px;color:var(--ink-soft);font-weight:400;}
+  .partners-strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:36px;}
+  .partners-strip a, .partners-strip span{display:block;}
+  .partners-strip img{height:56px;width:auto;max-width:140px;object-fit:contain;filter:grayscale(1);opacity:.75;transition:filter .15s ease, opacity .15s ease;}
+  .partners-strip img:hover{filter:grayscale(0);opacity:1;}
+  @media (max-width:980px){
+    .team-grid{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:620px){
+    .team-grid{grid-template-columns:1fr;}
+  }
   .domain-card{
     background:#fff;border-radius:var(--radius-md);overflow:hidden;box-shadow:0 8px 20px -14px rgba(14,42,31,.3);
   }
@@ -576,8 +592,8 @@
     <h3>Connexion administrateur</h3>
     <p>Accès réservé à l'administrateur et aux chercheurs autorisés à publier du contenu.</p>
     <form id="admin-login-form">
-      <label>Identifiant</label>
-      <input type="text" id="admin-user" name="username" placeholder="Identifiant" autocomplete="off" required>
+      <label>Adresse e-mail</label>
+      <input type="email" id="admin-user" name="username" placeholder="vous@cemv.ci" autocomplete="off" required>
       <label>Mot de passe</label>
       <div style="position:relative;">
         <input type="password" id="admin-pass" name="password" placeholder="••••••••" autocomplete="off" required style="padding-right:44px;">
@@ -600,15 +616,19 @@
     <div class="admin-panel-head">
       <div>
         <h3>Panneau d'administration</h3>
-        <p>Gère le contenu du site : actualités, textes et photos. Les changements sont enregistrés dans ce navigateur.</p>
+        <p>Gère le contenu du site : actualités, textes et photos. Les changements sont enregistrés dans ce navigateur. <span id="admin-role-badge" style="display:inline-block;margin-top:6px;font-weight:700;font-size:11.5px;letter-spacing:.03em;padding:3px 10px;border-radius:999px;"></span></p>
       </div>
       <button type="button" class="btn btn-outline" id="admin-logout-btn" style="padding:9px 16px;font-size:13px;">Déconnexion</button>
     </div>
 
     <div class="admin-tabs" role="tablist">
       <button type="button" class="admin-tab active" data-tab="news">Actualités</button>
-      <button type="button" class="admin-tab" data-tab="projects">Projets</button>
-      <button type="button" class="admin-tab" data-tab="content">Contenu du site (hero &amp; à propos)</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-projects" data-tab="projects">Projets</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-team" data-tab="team">Équipe</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-partners" data-tab="partners">Partenaires</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-publications" data-tab="publications">Publications</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-documents" data-tab="documents">Documents</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-content" data-tab="content">Contenu du site (hero &amp; à propos)</button>
     </div>
 
     <div class="admin-tab-panel" id="admin-tab-news">
@@ -619,6 +639,26 @@
     <div class="admin-tab-panel" id="admin-tab-projects" style="display:none;">
       <div id="admin-projects-list"></div>
       <button type="button" class="btn btn-outline" id="admin-add-project" style="margin-top:6px;">+ Ajouter un projet</button>
+    </div>
+
+    <div class="admin-tab-panel" id="admin-tab-team" style="display:none;">
+      <div id="admin-team-list"></div>
+      <button type="button" class="btn btn-outline" id="admin-add-team" style="margin-top:6px;">+ Ajouter un membre de l'équipe</button>
+    </div>
+
+    <div class="admin-tab-panel" id="admin-tab-partners" style="display:none;">
+      <div id="admin-partners-list"></div>
+      <button type="button" class="btn btn-outline" id="admin-add-partner" style="margin-top:6px;">+ Ajouter un partenaire</button>
+    </div>
+
+    <div class="admin-tab-panel" id="admin-tab-publications" style="display:none;">
+      <div id="admin-publications-list"></div>
+      <button type="button" class="btn btn-outline" id="admin-add-publication" style="margin-top:6px;">+ Ajouter une publication</button>
+    </div>
+
+    <div class="admin-tab-panel" id="admin-tab-documents" style="display:none;">
+      <div id="admin-documents-list"></div>
+      <button type="button" class="btn btn-outline" id="admin-add-document" style="margin-top:6px;">+ Ajouter un document</button>
     </div>
 
     <div class="admin-tab-panel" id="admin-tab-content" style="display:none;">
@@ -885,6 +925,26 @@
 <!-- ================= PROJETS ================= -->
 <section id="projects-section"></section>
 
+<!-- ================= ÉQUIPE ================= -->
+<section id="team-section" style="display:none;">
+  <div class="wrap">
+    <div class="section-head">
+      <div><span class="eyebrow">NOTRE ÉQUIPE</span><h3>Les chercheurs du CEMV</h3></div>
+    </div>
+    <div class="team-grid" id="team-grid"></div>
+  </div>
+</section>
+
+<!-- ================= PARTENAIRES ================= -->
+<section id="partners-section" style="display:none;background:var(--green-50);">
+  <div class="wrap">
+    <div class="section-head">
+      <div><span class="eyebrow">ILS NOUS FONT CONFIANCE</span><h3>Nos partenaires</h3></div>
+    </div>
+    <div class="partners-strip" id="partners-strip"></div>
+  </div>
+</section>
+
 <!-- ================= FOOTER ================= -->
 <footer id="contact">
   <div class="wrap">
@@ -946,7 +1006,13 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  // ---------- Connexion à Supabase (base de données partagée) ----------
+  const SUPABASE_URL = 'https://ermnggfazzdzcjstjytz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVybW5nZ2ZhenpkemNqc3RqeXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MTQ0NjMsImV4cCI6MjEwNTM5MDQ2M30.RWRfHftIRHoh9Z6KRrQxW98qbg_mP14hxYfruc5d61Q';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   // ---------- Modale Espace membre ----------
   (function(){
     const openBtn = document.getElementById('member-open-btn');
@@ -1101,9 +1167,10 @@
 
   // ---------- Actualités dynamiques + Panneau d'administration ----------
   (function(){
-    const STORAGE_KEY = 'cemv_news_data_v1';
-    const ADMIN_USER = 'admin';
-    const ADMIN_PASS = 'cemv2026';
+    // Rôles réels, vérifiés par Supabase (auth + RLS) : 'admin' a accès complet,
+    // 'chercheur' ne peut gérer que les actualités (ajout/modification, pas suppression),
+    // et ni l'un ni l'autre n'est contournable depuis le navigateur — c'est la base de données qui tranche.
+    let currentRole = null; // 'admin' | 'chercheur' | null
 
     const defaultNews = [
       { id:'n1', date:'12 sept. 2025', tag:'recherche', img:'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=500&q=80',
@@ -1131,18 +1198,27 @@
       '<rect width="100%" height="100%" fill="url(#g)"/></svg>'
     );
 
-    function loadNews(){
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch(e) {}
-      return JSON.parse(JSON.stringify(defaultNews));
+    async function loadNewsFromDB(){
+      const { data, error } = await sb.from('news').select('*').order('sort_order', { ascending: true });
+      if (error || !data || data.length === 0) return JSON.parse(JSON.stringify(defaultNews));
+      return data.map((row) => ({ id: row.id, date: row.date, tag: row.tag, img: row.img, title: row.title }));
     }
-    function saveNews(data){
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+    // Enregistre chaque actualité dans Supabase (insertion pour les nouvelles, mise à jour pour les existantes)
+    async function syncNewsToDB(){
+      for (const item of newsData) {
+        const payload = { date: item.date, tag: item.tag, img: item.img || null, title: item.title !== undefined ? item.title : (item.fr || '') };
+        if (typeof item.id === 'number') {
+          const { error } = await sb.from('news').update(payload).eq('id', item.id);
+          if (error) console.error('Erreur mise à jour actualité :', error.message);
+        } else {
+          const { data, error } = await sb.from('news').insert(payload).select().single();
+          if (error) console.error('Erreur ajout actualité :', error.message);
+          else if (data) item.id = data.id;
+        }
+      }
     }
 
-    let newsData = loadNews();
+    let newsData = JSON.parse(JSON.stringify(defaultNews));
 
     function escapeHtml(str){
       const d = document.createElement('div');
@@ -1155,7 +1231,7 @@
       const grid = document.getElementById('news-grid');
       if (!grid) return;
       grid.innerHTML = newsData.map((item) => {
-        const title = item.title !== undefined ? item.title : (lang === 'en' ? item.en : item.fr);
+        const title = item.title !== undefined && item.title !== '' ? item.title : (lang === 'en' ? item.en : item.fr);
         const tagInfo = tagLabels[item.tag] || tagLabels.recherche;
         return '<div class="news-card">' +
           '<div class="news-photo"><img src="' + (item.img || fallbackImg) + '" alt="' + escapeHtml(title.replace(/<[^>]+>/g,'')) + '"></div>' +
@@ -1175,7 +1251,7 @@
       const lang = window.CEMV_LANG || 'fr';
       if (newsData.length === 0) { track.innerHTML = ''; return; }
       const items = newsData.map((item) => {
-        const title = item.title !== undefined ? item.title : (lang === 'en' ? item.en : item.fr);
+        const title = item.title !== undefined && item.title !== '' ? item.title : (lang === 'en' ? item.en : item.fr);
         const plain = title.replace(/<[^>]+>/g, '');
         return '<span><b>' + escapeHtml(item.date) + '</b>' + escapeHtml(plain) + '</span>';
       }).join('');
@@ -1183,7 +1259,8 @@
       track.innerHTML = items + items;
     }
     window.renderNews = renderNews;
-    renderNews();
+    renderNews(); // affichage immédiat avec les valeurs par défaut, remplacé dès que Supabase répond
+    loadNewsFromDB().then((data) => { newsData = data; renderNews(); });
 
     // ---- Projets : données, rendu sur la page, panneau admin ----
     const PROJECTS_KEY = 'cemv_projects_data_v1';
@@ -1196,18 +1273,26 @@
       }
     ];
 
-    function loadProjects(){
-      try {
-        const raw = localStorage.getItem(PROJECTS_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch(e) {}
-      return JSON.parse(JSON.stringify(defaultProjects));
+    async function loadProjectsFromDB(){
+      const { data, error } = await sb.from('projects').select('*').order('sort_order', { ascending: true });
+      if (error || !data || data.length === 0) return JSON.parse(JSON.stringify(defaultProjects));
+      return data.map((row) => ({ id: row.id, title: row.title, desc: row.description, img: row.img }));
     }
-    function saveProjects(data){
-      try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(data)); } catch(e) {}
+    async function syncProjectsToDB(){
+      for (const item of projectsData) {
+        const payload = { title: item.title, description: item.desc, img: item.img || null };
+        if (typeof item.id === 'number') {
+          const { error } = await sb.from('projects').update(payload).eq('id', item.id);
+          if (error) console.error('Erreur mise à jour projet :', error.message);
+        } else {
+          const { data, error } = await sb.from('projects').insert(payload).select().single();
+          if (error) console.error('Erreur ajout projet :', error.message);
+          else if (data) item.id = data.id;
+        }
+      }
     }
 
-    let projectsData = loadProjects();
+    let projectsData = JSON.parse(JSON.stringify(defaultProjects));
 
     function renderProjects(){
       const section = document.getElementById('projects-section');
@@ -1239,6 +1324,7 @@
       section.innerHTML = html;
     }
     renderProjects();
+    loadProjectsFromDB().then((data) => { projectsData = data; renderProjects(); });
 
     function renderAdminProjectsList(){
       const list = document.getElementById('admin-projects-list');
@@ -1261,8 +1347,14 @@
       }).join('');
 
       list.querySelectorAll('[data-remove-project]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          projectsData.splice(parseInt(btn.dataset.removeProject, 10), 1);
+        btn.addEventListener('click', async () => {
+          const idx = parseInt(btn.dataset.removeProject, 10);
+          const item = projectsData[idx];
+          if (item && typeof item.id === 'number') {
+            const { error } = await sb.from('projects').delete().eq('id', item.id);
+            if (error) { alert('Suppression refusée : ' + error.message); return; }
+          }
+          projectsData.splice(idx, 1);
           renderAdminProjectsList();
         });
       });
@@ -1293,9 +1385,195 @@
 
     document.getElementById('admin-add-project').addEventListener('click', () => {
       collectAdminProjectsForm();
-      projectsData.push({ id: 'p' + Date.now(), title: '', desc: '', img: '' });
+      projectsData.push({ id: null, title: '', desc: '', img: '' });
       renderAdminProjectsList();
     });
+
+    // ---- Fabrique générique pour les sections simples (Équipe, Partenaires, Publications, Documents) ----
+    // Chacune suit le même schéma : liste en mémoire ← Supabase, formulaire d'édition, ajout/suppression immédiate.
+    function makeSimpleSection(opts){
+      // opts: { table, listElId, addBtnId, fields: [{key,label,type:'text'|'textarea'|'photo'}], mapFromRow, mapToPayload, blankItem }
+      let items = [];
+
+      async function load(){
+        const { data, error } = await sb.from(opts.table).select('*').order('sort_order', { ascending: true });
+        items = (!error && data) ? data.map(opts.mapFromRow) : [];
+        return items;
+      }
+
+      function renderAdmin(){
+        const list = document.getElementById(opts.listElId);
+        if (!list) return;
+        list.innerHTML = items.map((item, idx) => {
+          let fieldsHtml = '';
+          opts.fields.forEach((f) => {
+            if (f.type === 'photo'){
+              const src = item[f.key] || fallbackImg;
+              fieldsHtml += '<div class="full admin-photo-row">' +
+                '<img class="admin-photo-preview" src="' + src + '" alt="">' +
+                '<div style="flex:1;"><label>' + f.label + '</label>' +
+                '<input type="file" accept="image/*" data-sfield="' + f.key + 'file">' +
+                '<input type="hidden" data-sfield="' + f.key + '" value="' + escapeHtml(item[f.key] || '') + '"></div></div>';
+            } else if (f.type === 'textarea'){
+              fieldsHtml += '<div class="full"><label>' + f.label + '</label><textarea data-sfield="' + f.key + '">' + escapeHtml(item[f.key] || '') + '</textarea></div>';
+            } else {
+              fieldsHtml += '<div><label>' + f.label + '</label><input type="text" data-sfield="' + f.key + '" value="' + escapeHtml(item[f.key] || '') + '"></div>';
+            }
+          });
+          return '<div class="admin-news-item" data-idx="' + idx + '">' +
+            '<button type="button" class="admin-news-remove" data-sremove="' + idx + '" aria-label="Supprimer">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+            '</button>' + fieldsHtml +
+          '</div>';
+        }).join('');
+
+        list.querySelectorAll('[data-sremove]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const idx = parseInt(btn.dataset.sremove, 10);
+            const item = items[idx];
+            if (item && typeof item.id === 'number'){
+              const { error } = await sb.from(opts.table).delete().eq('id', item.id);
+              if (error) { alert('Suppression refusée : ' + error.message); return; }
+            }
+            items.splice(idx, 1);
+            renderAdmin();
+          });
+        });
+        list.querySelectorAll('[data-sfield$="file"]').forEach((fileInput) => {
+          fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              const row = fileInput.closest('.admin-news-item');
+              const key = fileInput.dataset.sfield.replace(/file$/, '');
+              row.querySelector('[data-sfield="' + key + '"]').value = reader.result;
+              row.querySelector('.admin-photo-preview').src = reader.result;
+            };
+            reader.readAsDataURL(file);
+          });
+        });
+      }
+
+      function collectForm(){
+        document.querySelectorAll('#' + opts.listElId + ' .admin-news-item').forEach((row) => {
+          const idx = parseInt(row.dataset.idx, 10);
+          if (!items[idx]) return;
+          opts.fields.forEach((f) => {
+            const el = row.querySelector('[data-sfield="' + f.key + '"]');
+            if (el) items[idx][f.key] = el.value.trim();
+          });
+        });
+      }
+
+      async function sync(){
+        for (const item of items) {
+          const payload = opts.mapToPayload(item);
+          if (typeof item.id === 'number') {
+            const { error } = await sb.from(opts.table).update(payload).eq('id', item.id);
+            if (error) console.error('Erreur mise à jour (' + opts.table + ') :', error.message);
+          } else {
+            const { data, error } = await sb.from(opts.table).insert(payload).select().single();
+            if (error) console.error('Erreur ajout (' + opts.table + ') :', error.message);
+            else if (data) item.id = data.id;
+          }
+        }
+      }
+
+      const addBtn = document.getElementById(opts.addBtnId);
+      if (addBtn) addBtn.addEventListener('click', () => {
+        collectForm();
+        items.push(Object.assign({ id: null }, opts.blankItem));
+        renderAdmin();
+      });
+
+      return { load, renderAdmin, collectForm, sync, getItems: () => items };
+    }
+
+    const teamSection = makeSimpleSection({
+      table: 'team', listElId: 'admin-team-list', addBtnId: 'admin-add-team',
+      fields: [
+        { key: 'name', label: 'Nom', type: 'text' },
+        { key: 'role', label: 'Fonction', type: 'text' },
+        { key: 'bio', label: 'Courte biographie', type: 'textarea' },
+        { key: 'photo', label: 'Photo', type: 'photo' }
+      ],
+      mapFromRow: (row) => ({ id: row.id, name: row.name, role: row.role, bio: row.bio, photo: row.photo }),
+      mapToPayload: (item) => ({ name: item.name || '', role: item.role || '', bio: item.bio || '', photo: item.photo || null }),
+      blankItem: { name:'', role:'', bio:'', photo:'' }
+    });
+
+    const partnersSection = makeSimpleSection({
+      table: 'partners', listElId: 'admin-partners-list', addBtnId: 'admin-add-partner',
+      fields: [
+        { key: 'name', label: 'Nom du partenaire', type: 'text' },
+        { key: 'website', label: 'Site web (optionnel)', type: 'text' },
+        { key: 'logo', label: 'Logo', type: 'photo' }
+      ],
+      mapFromRow: (row) => ({ id: row.id, name: row.name, website: row.website, logo: row.logo }),
+      mapToPayload: (item) => ({ name: item.name || '', website: item.website || null, logo: item.logo || null }),
+      blankItem: { name:'', website:'', logo:'' }
+    });
+
+    const publicationsSection = makeSimpleSection({
+      table: 'publications', listElId: 'admin-publications-list', addBtnId: 'admin-add-publication',
+      fields: [
+        { key: 'title', label: 'Titre', type: 'textarea' },
+        { key: 'authors', label: 'Auteurs', type: 'text' },
+        { key: 'source', label: 'Source / Revue', type: 'text' },
+        { key: 'year', label: 'Année', type: 'text' },
+        { key: 'file_url', label: 'Lien vers le PDF (optionnel)', type: 'text' }
+      ],
+      mapFromRow: (row) => ({ id: row.id, title: row.title, authors: row.authors, source: row.source, year: row.year, file_url: row.file_url }),
+      mapToPayload: (item) => ({ title: item.title || '', authors: item.authors || null, source: item.source || null, year: item.year || null, file_url: item.file_url || null }),
+      blankItem: { title:'', authors:'', source:'', year:'', file_url:'' }
+    });
+
+    const documentsSection = makeSimpleSection({
+      table: 'documents', listElId: 'admin-documents-list', addBtnId: 'admin-add-document',
+      fields: [
+        { key: 'title', label: 'Titre du document', type: 'text' },
+        { key: 'file_url', label: 'Lien vers le fichier', type: 'text' }
+      ],
+      mapFromRow: (row) => ({ id: row.id, title: row.title, file_url: row.file_url }),
+      mapToPayload: (item) => ({ title: item.title || '', file_url: item.file_url || '' }),
+      blankItem: { title:'', file_url:'' }
+    });
+
+    // ---- Affichage public (page d'accueil) : Équipe et Partenaires ----
+    function renderTeamPublic(){
+      const section = document.getElementById('team-section');
+      const grid = document.getElementById('team-grid');
+      const members = teamSection.getItems();
+      if (!section || !grid) return;
+      if (members.length === 0) { section.style.display = 'none'; return; }
+      section.style.display = '';
+      grid.innerHTML = members.map((m) => (
+        '<div class="team-card">' +
+          '<img src="' + (m.photo || fallbackImg) + '" alt="' + escapeHtml(m.name || '') + '">' +
+          '<h4>' + escapeHtml(m.name || '') + '</h4>' +
+          '<p>' + escapeHtml(m.role || '') + '</p>' +
+          (m.bio ? '<p class="bio">' + escapeHtml(m.bio) + '</p>' : '') +
+        '</div>'
+      )).join('');
+    }
+
+    function renderPartnersPublic(){
+      const section = document.getElementById('partners-section');
+      const strip = document.getElementById('partners-strip');
+      const partners = partnersSection.getItems();
+      if (!section || !strip) return;
+      if (partners.length === 0) { section.style.display = 'none'; return; }
+      section.style.display = '';
+      strip.innerHTML = partners.map((p) => {
+        const img = '<img src="' + (p.logo || fallbackImg) + '" alt="' + escapeHtml(p.name || '') + '">';
+        return p.website ? '<a href="' + escapeHtml(p.website) + '" target="_blank" rel="noopener">' + img + '</a>' : '<span>' + img + '</span>';
+      }).join('');
+    }
+
+    // Chargement initial : équipe et partenaires sont publics, donc visibles par tous dès l'arrivée sur la page
+    teamSection.load().then(renderTeamPublic);
+    partnersSection.load().then(renderPartnersPublic);
 
     // ---- Panneau d'administration : construction du formulaire ----
     function renderAdminList(){
@@ -1326,8 +1604,14 @@
       }).join('');
 
       list.querySelectorAll('[data-remove]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          newsData.splice(parseInt(btn.dataset.remove, 10), 1);
+        btn.addEventListener('click', async () => {
+          const idx = parseInt(btn.dataset.remove, 10);
+          const item = newsData[idx];
+          if (item && typeof item.id === 'number') {
+            const { error } = await sb.from('news').delete().eq('id', item.id);
+            if (error) { alert('Suppression refusée : ' + error.message); return; }
+          }
+          newsData.splice(idx, 1);
           renderAdminList();
         });
       });
@@ -1345,6 +1629,8 @@
           reader.readAsDataURL(file);
         });
       });
+
+      if (typeof applyRolePermissions === 'function') applyRolePermissions();
     }
 
     function collectAdminForm(){
@@ -1399,16 +1685,75 @@
       adminPassInput.type = adminPassInput.type === 'password' ? 'text' : 'password';
     });
 
-    adminLoginForm.addEventListener('submit', (e) => {
+    const ADMIN_ONLY_TABS = ['projects', 'team', 'partners', 'publications', 'documents', 'content'];
+
+    function applyRolePermissions(){
+      const badge = document.getElementById('admin-role-badge');
+      const isAdmin = currentRole === 'admin';
+
+      if (badge){
+        badge.textContent = isAdmin ? 'Administrateur — accès complet' : 'Chercheur — accès limité (actualités)';
+        badge.style.background = isAdmin ? 'var(--green-100)' : '#FFF3DB';
+        badge.style.color = isAdmin ? 'var(--green-700)' : '#8A5A00';
+      }
+      // Seul l'administrateur voit les onglets réservés (Projets, Équipe, Partenaires, Publications, Documents, Contenu du site)
+      ADMIN_ONLY_TABS.forEach((tab) => {
+        const btn = document.getElementById('admin-tab-btn-' + tab);
+        if (btn) btn.style.display = isAdmin ? '' : 'none';
+      });
+      // Si un chercheur était resté sur un onglet réservé, on le ramène sur Actualités
+      if (!isAdmin){
+        document.querySelectorAll('.admin-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === 'news'));
+        Object.keys(tabPanels).forEach((key) => { tabPanels[key].style.display = key === 'news' ? 'block' : 'none'; });
+      }
+      // Le chercheur peut ajouter/modifier des actualités, mais pas les supprimer ni réinitialiser
+      document.querySelectorAll('#admin-news-list .admin-news-remove').forEach((btn) => {
+        btn.style.display = isAdmin ? '' : 'none';
+      });
+      if (adminResetBtn) adminResetBtn.style.display = isAdmin ? '' : 'none';
+    }
+
+    const adminLoginSubmitBtn = adminLoginForm.querySelector('button[type="submit"]');
+
+    adminLoginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const user = document.getElementById('admin-user').value.trim().toLowerCase();
+      const email = document.getElementById('admin-user').value.trim();
       const pass = document.getElementById('admin-pass').value.trim();
-      if (user === ADMIN_USER && pass === ADMIN_PASS) {
+      adminLoginError.style.display = 'none';
+      adminLoginSubmitBtn.disabled = true;
+      adminLoginSubmitBtn.textContent = 'Connexion...';
+
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+      adminLoginSubmitBtn.disabled = false;
+      adminLoginSubmitBtn.textContent = 'Se connecter';
+
+      const role = !error && data.user ? (data.user.user_metadata && data.user.user_metadata.role) : null;
+
+      if (!error && (role === 'admin' || role === 'chercheur')) {
+        currentRole = role;
         adminLoginOverlay.classList.remove('open');
         renderAdminList();
+        if (role === 'admin') {
+          renderAdminProjectsList();
+          await Promise.all([teamSection.load(), partnersSection.load(), publicationsSection.load(), documentsSection.load()]);
+          teamSection.renderAdmin();
+          partnersSection.renderAdmin();
+          publicationsSection.renderAdmin();
+          documentsSection.renderAdmin();
+          fillContentForm();
+        }
         adminSaveConfirm.style.display = 'none';
         adminPanelOverlay.classList.add('open');
+        applyRolePermissions();
       } else {
+        currentRole = null;
+        await sb.auth.signOut();
+        if (!error && !role) {
+          adminLoginError.textContent = '⚠ Ce compte existe mais n\'a pas de rôle (admin/chercheur) configuré. Contacte l\'administrateur.';
+        } else {
+          adminLoginError.textContent = '⚠ Adresse e-mail ou mot de passe incorrect.';
+        }
         adminLoginError.style.display = 'block';
       }
     });
@@ -1416,38 +1761,65 @@
     function closeAdminPanel(){ adminPanelOverlay.classList.remove('open'); }
     adminPanelClose.addEventListener('click', closeAdminPanel);
     adminPanelOverlay.addEventListener('click', (e) => { if (e.target === adminPanelOverlay) closeAdminPanel(); });
-    adminLogoutBtn.addEventListener('click', () => {
+    adminLogoutBtn.addEventListener('click', async () => {
+      currentRole = null;
+      await sb.auth.signOut();
       closeAdminPanel();
       window.location.href = 'cemv-login.html';
     });
 
+    // Si une session existe déjà (ex. page rechargée après connexion), on la restaure
+    sb.auth.getSession().then(({ data }) => {
+      const role = data.session && data.session.user.user_metadata && data.session.user.user_metadata.role;
+      if (role === 'admin' || role === 'chercheur') currentRole = role;
+    });
+
     adminAddBtn.addEventListener('click', () => {
       collectAdminForm();
-      newsData.push({ id:'n' + Date.now(), date:'', tag:'recherche', img:'', title:'' });
+      newsData.push({ id: null, date:'', tag:'recherche', img:'', title:'' });
       renderAdminList();
     });
 
-    adminSaveBtn.addEventListener('click', () => {
+    adminSaveBtn.addEventListener('click', async () => {
+      adminSaveBtn.disabled = true;
       collectAdminForm();
-      saveNews(newsData);
+      await syncNewsToDB();
       renderNews();
-      collectAdminProjectsForm();
-      saveProjects(projectsData);
-      renderProjects();
+      if (currentRole === 'admin') {
+        collectAdminProjectsForm();
+        await syncProjectsToDB();
+        renderProjects();
+        teamSection.collectForm(); await teamSection.sync(); teamSection.renderAdmin();
+        partnersSection.collectForm(); await partnersSection.sync(); partnersSection.renderAdmin();
+        publicationsSection.collectForm(); await publicationsSection.sync(); publicationsSection.renderAdmin();
+        documentsSection.collectForm(); await documentsSection.sync(); documentsSection.renderAdmin();
+        renderTeamPublic();
+        renderPartnersPublic();
+      }
+      adminSaveBtn.disabled = false;
       adminSaveConfirm.style.display = 'block';
       setTimeout(() => { adminSaveConfirm.style.display = 'none'; }, 2500);
     });
 
-    adminResetBtn.addEventListener('click', () => {
+    adminResetBtn.addEventListener('click', async () => {
+      await Promise.all(newsData.filter(n => typeof n.id === 'number').map(n => sb.from('news').delete().eq('id', n.id)));
       newsData = JSON.parse(JSON.stringify(defaultNews));
-      saveNews(newsData);
+      await syncNewsToDB();
       renderAdminList();
       renderNews();
     });
 
     // ---- Onglets du panneau ----
     const tabButtons = document.querySelectorAll('.admin-tab');
-    const tabPanels = { news: document.getElementById('admin-tab-news'), projects: document.getElementById('admin-tab-projects'), content: document.getElementById('admin-tab-content') };
+    const tabPanels = {
+      news: document.getElementById('admin-tab-news'),
+      projects: document.getElementById('admin-tab-projects'),
+      team: document.getElementById('admin-tab-team'),
+      partners: document.getElementById('admin-tab-partners'),
+      publications: document.getElementById('admin-tab-publications'),
+      documents: document.getElementById('admin-tab-documents'),
+      content: document.getElementById('admin-tab-content')
+    };
     tabButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
         tabButtons.forEach((b) => b.classList.remove('active'));
@@ -1480,15 +1852,22 @@
       aboutImg: contentEls.aboutImg.src
     };
 
-    function loadContent(){
-      try {
-        const raw = localStorage.getItem(CONTENT_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch(e) {}
-      return null;
+    async function loadContentFromDB(){
+      const { data, error } = await sb.from('site_content').select('*').eq('id', 1).maybeSingle();
+      if (error || !data) return null;
+      // Une ligne vide (jamais modifiée) a tous ses champs à null : on ignore dans ce cas
+      if (!data.hero_title && !data.about_title) return null;
+      return {
+        heroTitle: data.hero_title, heroDesc: data.hero_desc, heroImg: data.hero_img,
+        aboutTitle: data.about_title, aboutP1: data.about_p1, aboutP2: data.about_p2, aboutImg: data.about_img
+      };
     }
-    function saveContent(data){
-      try { localStorage.setItem(CONTENT_KEY, JSON.stringify(data)); } catch(e) {}
+    async function saveContentToDB(data){
+      const { error } = await sb.from('site_content').update({
+        hero_title: data.heroTitle, hero_desc: data.heroDesc, hero_img: data.heroImg,
+        about_title: data.aboutTitle, about_p1: data.aboutP1, about_p2: data.aboutP2, about_img: data.aboutImg
+      }).eq('id', 1);
+      if (error) alert('Enregistrement du contenu refusé : ' + error.message);
     }
     function applyContent(data){
       contentEls.heroTitle.innerHTML = data.heroTitle;
@@ -1500,8 +1879,8 @@
       contentEls.aboutImg.src = data.aboutImg;
     }
 
-    let siteContent = loadContent();
-    if (siteContent) applyContent(siteContent);
+    let siteContent = null;
+    loadContentFromDB().then((data) => { if (data) { siteContent = data; applyContent(data); } });
 
     function fillContentForm(){
       const current = siteContent || defaultContent;
@@ -1544,16 +1923,18 @@
       };
     }
 
-    // Le bouton "Enregistrer les modifications" sauvegarde aussi cet onglet
-    adminSaveBtn.addEventListener('click', () => {
+    // Le bouton "Enregistrer les modifications" sauvegarde aussi cet onglet (réservé à l'administrateur)
+    adminSaveBtn.addEventListener('click', async () => {
+      if (currentRole !== 'admin') return;
       siteContent = collectContentForm();
-      saveContent(siteContent);
+      await saveContentToDB(siteContent);
       applyContent(siteContent);
     });
 
-    document.getElementById('admin-content-reset').addEventListener('click', () => {
-      siteContent = null;
-      try { localStorage.removeItem(CONTENT_KEY); } catch(e) {}
+    document.getElementById('admin-content-reset').addEventListener('click', async () => {
+      if (currentRole !== 'admin') return;
+      siteContent = defaultContent;
+      await saveContentToDB(defaultContent);
       applyContent(defaultContent);
       fillContentForm();
     });
