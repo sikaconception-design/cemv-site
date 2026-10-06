@@ -1417,6 +1417,18 @@
                 '<div style="flex:1;"><label>' + f.label + '</label>' +
                 '<input type="text" data-sfield="' + f.key + '" value="' + escapeHtml(item[f.key] || '') + '" placeholder="Lien (URL) de la photo, ou téléversez ci-dessous">' +
                 '<input type="file" accept="image/*" data-sfield="' + f.key + 'file" style="margin-top:6px;"></div></div>';
+            } else if (f.type === 'pubs'){
+              const chosen = (item[f.key] || []).map(Number);
+              const pubs = (opts.pubSource ? opts.pubSource() : []).filter((p) => typeof p.id === 'number');
+              fieldsHtml += '<div class="full"><label>' + f.label + '</label>' +
+                '<input type="search" placeholder="Filtrer les publications…" oninput="const q=this.value.toLowerCase();this.nextElementSibling.querySelectorAll(\'label\').forEach(l=>{l.style.display=l.textContent.toLowerCase().includes(q)?\'\':\'none\'})" style="margin-bottom:6px;">' +
+                '<div style="max-height:190px;overflow-y:auto;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;">' +
+                (pubs.length ? pubs.map((p) =>
+                  '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;margin:6px 0;cursor:pointer;">' +
+                  '<input type="checkbox" data-pubsfor="' + f.key + '" value="' + p.id + '"' + (chosen.indexOf(p.id) > -1 ? ' checked' : '') + ' style="width:auto;margin-top:3px;">' +
+                  '<span>' + escapeHtml(p.title || '(sans titre)') + (p.year ? ' <em style="color:var(--ink-soft);">(' + escapeHtml(p.year) + ')</em>' : '') + '</span></label>'
+                ).join('') : '<p style="font-size:12.5px;color:var(--ink-soft);margin:6px 0;">Aucune publication enregistrée pour le moment (onglet Publications).</p>') +
+                '</div></div>';
             } else if (f.type === 'textarea'){
               fieldsHtml += '<div class="full"><label>' + f.label + '</label><textarea data-sfield="' + f.key + '">' + escapeHtml(item[f.key] || '') + '</textarea></div>';
             } else if (f.type === 'slider'){
@@ -1476,6 +1488,10 @@
           const idx = parseInt(row.dataset.idx, 10);
           if (!items[idx]) return;
           opts.fields.forEach((f) => {
+            if (f.type === 'pubs'){
+              items[idx][f.key] = Array.from(row.querySelectorAll('input[data-pubsfor="' + f.key + '"]:checked')).map((c) => Number(c.value));
+              return;
+            }
             const el = row.querySelector('[data-sfield="' + f.key + '"]');
             if (el) items[idx][f.key] = el.value.trim();
           });
@@ -1507,7 +1523,7 @@
     }
 
     const teamSection = makeSimpleSection({
-      table: 'team', listElId: 'admin-team-list', addBtnId: 'admin-add-team',
+      table: 'team', listElId: 'admin-team-list', addBtnId: 'admin-add-team', pubSource: () => publicationsSection.getItems(),
       fields: [
         { key: 'name', label: 'Nom', type: 'text' },
         { key: 'role', label: 'Fonction', type: 'text' },
@@ -1516,13 +1532,14 @@
         { key: 'email', label: 'E-mail professionnel (affiché sur la fiche)', type: 'text' },
         { key: 'orcid', label: 'Identifiant ORCID (ex. 0000-0002-1825-0097)', type: 'text' },
         { key: 'scholar', label: 'Lien Google Scholar', type: 'text' },
+        { key: 'publication_ids', label: 'Publications de ce chercheur (cochez celles à afficher sur sa fiche)', type: 'pubs' },
         { key: 'photo', label: 'Photo', type: 'photo' },
         { key: 'photo_x', label: 'Position horizontale de la photo', type: 'slider' },
         { key: 'photo_y', label: 'Position verticale de la photo', type: 'slider' }
       ],
-      mapFromRow: (row) => ({ id: row.id, name: row.name, role: row.role, bio: row.bio, photo: row.photo, photo_x: row.photo_x, photo_y: row.photo_y, speciality: row.speciality, email: row.email, orcid: row.orcid, scholar: row.scholar }),
-      mapToPayload: (item) => ({ name: item.name || '', role: item.role || '', bio: item.bio || '', photo: item.photo || null, photo_x: item.photo_x === undefined || item.photo_x === '' ? 50 : item.photo_x, photo_y: item.photo_y === undefined || item.photo_y === '' ? 50 : item.photo_y, speciality: item.speciality || null, email: item.email || null, orcid: item.orcid || null, scholar: item.scholar || null }),
-      blankItem: { name:'', role:'', bio:'', photo:'', photo_x:50, photo_y:50, speciality:'', email:'', orcid:'', scholar:'' }
+      mapFromRow: (row) => ({ id: row.id, name: row.name, role: row.role, bio: row.bio, photo: row.photo, photo_x: row.photo_x, photo_y: row.photo_y, speciality: row.speciality, email: row.email, orcid: row.orcid, scholar: row.scholar, publication_ids: row.publication_ids || [] }),
+      mapToPayload: (item) => ({ name: item.name || '', role: item.role || '', bio: item.bio || '', photo: item.photo || null, photo_x: item.photo_x === undefined || item.photo_x === '' ? 50 : item.photo_x, photo_y: item.photo_y === undefined || item.photo_y === '' ? 50 : item.photo_y, speciality: item.speciality || null, email: item.email || null, orcid: item.orcid || null, scholar: item.scholar || null, publication_ids: item.publication_ids || [] }),
+      blankItem: { name:'', role:'', bio:'', photo:'', photo_x:50, photo_y:50, speciality:'', email:'', orcid:'', scholar:'', publication_ids:[] }
     });
 
     const partnersSection = makeSimpleSection({
