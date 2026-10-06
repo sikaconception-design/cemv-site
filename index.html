@@ -986,6 +986,13 @@
   const SUPABASE_URL = 'https://ermnggfazzdzcjstjytz.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVybW5nZ2ZhenpkemNqc3RqeXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MTQ0NjMsImV4cCI6MjEwNTM5MDQ2M30.RWRfHftIRHoh9Z6KRrQxW98qbg_mP14hxYfruc5d61Q';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Garde la session active et évite toute déconnexion silencieuse : si le jeton se rafraîchit,
+  // on met juste à jour le rôle sans rien fermer ni recharger.
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'TOKEN_REFRESHED' && session && session.user && session.user.user_metadata) {
+      window.CEMV_CURRENT_ROLE = session.user.user_metadata.role || null;
+    }
+  });
 
   // ---------- Modale Espace membre ----------
   (function(){
@@ -1397,6 +1404,11 @@
                 '<input type="file" accept="image/*" data-sfield="' + f.key + 'file" style="margin-top:6px;"></div></div>';
             } else if (f.type === 'textarea'){
               fieldsHtml += '<div class="full"><label>' + f.label + '</label><textarea data-sfield="' + f.key + '">' + escapeHtml(item[f.key] || '') + '</textarea></div>';
+            } else if (f.type === 'slider'){
+              const val = (item[f.key] === undefined || item[f.key] === null || item[f.key] === '') ? 50 : item[f.key];
+              fieldsHtml += '<div><label>' + f.label + ' (' + val + '%)</label>' +
+                '<input type="range" min="0" max="100" data-sfield="' + f.key + '" value="' + val + '" ' +
+                'oninput="this.previousElementSibling.textContent=\'' + f.label + ' (\'+this.value+\'%)\'"></div>';
             } else {
               fieldsHtml += '<div><label>' + f.label + '</label><input type="text" data-sfield="' + f.key + '" value="' + escapeHtml(item[f.key] || '') + '"></div>';
             }
@@ -1485,11 +1497,13 @@
         { key: 'name', label: 'Nom', type: 'text' },
         { key: 'role', label: 'Fonction', type: 'text' },
         { key: 'bio', label: 'Courte biographie', type: 'textarea' },
-        { key: 'photo', label: 'Photo', type: 'photo' }
+        { key: 'photo', label: 'Photo', type: 'photo' },
+        { key: 'photo_x', label: 'Position horizontale de la photo', type: 'slider' },
+        { key: 'photo_y', label: 'Position verticale de la photo', type: 'slider' }
       ],
-      mapFromRow: (row) => ({ id: row.id, name: row.name, role: row.role, bio: row.bio, photo: row.photo }),
-      mapToPayload: (item) => ({ name: item.name || '', role: item.role || '', bio: item.bio || '', photo: item.photo || null }),
-      blankItem: { name:'', role:'', bio:'', photo:'' }
+      mapFromRow: (row) => ({ id: row.id, name: row.name, role: row.role, bio: row.bio, photo: row.photo, photo_x: row.photo_x, photo_y: row.photo_y }),
+      mapToPayload: (item) => ({ name: item.name || '', role: item.role || '', bio: item.bio || '', photo: item.photo || null, photo_x: item.photo_x === undefined || item.photo_x === '' ? 50 : item.photo_x, photo_y: item.photo_y === undefined || item.photo_y === '' ? 50 : item.photo_y }),
+      blankItem: { name:'', role:'', bio:'', photo:'', photo_x:50, photo_y:50 }
     });
 
     const partnersSection = makeSimpleSection({
@@ -1561,14 +1575,16 @@
       if (!section || !grid) return;
       if (members.length === 0) { section.style.display = 'none'; return; }
       section.style.display = '';
-      grid.innerHTML = members.map((m) => (
-        '<div class="team-card">' +
-          '<img src="' + (m.photo || fallbackImg) + '" alt="' + escapeHtml(m.name || '') + '">' +
+      grid.innerHTML = members.map((m) => {
+        const px = (m.photo_x === undefined || m.photo_x === null) ? 50 : m.photo_x;
+        const py = (m.photo_y === undefined || m.photo_y === null) ? 50 : m.photo_y;
+        return '<div class="team-card">' +
+          '<img src="' + (m.photo || fallbackImg) + '" alt="' + escapeHtml(m.name || '') + '" style="object-position:' + px + '% ' + py + '%;">' +
           '<h4>' + escapeHtml(m.name || '') + '</h4>' +
           '<p>' + escapeHtml(m.role || '') + '</p>' +
           (m.bio ? '<p class="bio">' + escapeHtml(m.bio) + '</p>' : '') +
-        '</div>'
-      )).join('');
+        '</div>';
+      }).join('');
     }
 
     function renderPartnersPublic(){
