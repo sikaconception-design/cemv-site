@@ -1137,6 +1137,7 @@
       });
       buttons.forEach((btn) => btn.classList.toggle('active', btn.dataset.lang === lang));
       if (typeof window.renderNews === 'function') window.renderNews();
+      if (typeof window.renderStats === 'function') window.renderStats();
     }
 
     window.CEMV_LANG = 'fr';
@@ -2025,6 +2026,45 @@
       applyContent(defaultContent);
       fillContentForm();
     });
+  })();
+</script>
+
+<script>
+  // ---------- Chiffres clés dynamiques (gérés depuis /admin, section « Accueil et chiffres ») ----------
+  // Si la base ne répond pas ou ne contient rien, les chiffres écrits dans la page restent affichés.
+  (function(){
+    const list = document.querySelector('.stat-list');
+    if (!list) return;
+    const icons = {};
+    ['flask','users','book','globe'].forEach((k, i) => {
+      const el = list.querySelectorAll('.stat-icon')[i];
+      if (el) icons[k] = el.innerHTML;
+    });
+    const esc = (s) => { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; };
+    let stats = null;
+    window.renderStats = function(){
+      if (!stats) return;
+      const en = (window.CEMV_LANG || 'fr') === 'en';
+      list.innerHTML = stats.map((s) =>
+        '<div class="stat-item"><span class="stat-icon">' + (icons[s.icon] || icons.flask || '') + '</span>' +
+        '<span><strong>' + esc(s.display) + '</strong><span>' + esc(en && s.label_en ? s.label_en : s.label_fr) + '</span></span></div>'
+      ).join('');
+    };
+    (async function(){
+      const { data, error } = await sb.from('site_stats').select('*').order('sort_order').order('id');
+      if (error || !data || !data.length) return;
+      const out = await Promise.all(data.map(async (s) => {
+        let v = s.value || '';
+        if (s.mode === 'auto' && s.source) {
+          const r = await sb.from(s.source).select('id', { count: 'exact', head: true });
+          if (r.error || r.count == null) return null;
+          v = String(r.count);
+        }
+        return Object.assign({}, s, { display: (s.prefix || '') + v });
+      }));
+      stats = out.filter(Boolean);
+      if (stats.length) window.renderStats();
+    })();
   })();
 </script>
 
