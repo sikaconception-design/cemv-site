@@ -641,6 +641,23 @@
       <p id="admin-login-error" style="display:none;background:#FBEAEA;border:1px solid rgba(192,57,43,.3);color:#C0392B;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;margin:4px 0 0;">⚠ Identifiant ou mot de passe incorrect. Vérifie qu'aucune suggestion du navigateur n'a remplacé ce que tu as tapé (utilise l'icône œil pour vérifier le mot de passe).</p>
       <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;">Se connecter</button>
     </form>
+    <p id="admin-signup-link-wrap" style="text-align:center;margin-top:16px;font-size:13px;color:var(--ink-soft);">Vous êtes chercheur et n'avez pas de compte ? <a href="#" id="admin-show-signup" style="color:var(--green-700);font-weight:700;">Demander un accès</a></p>
+
+    <form id="admin-signup-form" style="display:none;" autocomplete="off">
+      <h3 style="font-size:19px;margin:6px 0 4px;">Inscription chercheur</h3>
+      <p style="font-size:12.5px;margin-bottom:8px;">Votre compte sera activé après validation par l'administrateur du CEMV.</p>
+      <label>Nom complet</label>
+      <input type="text" id="signup-name" required maxlength="120" placeholder="ex. Dr Kouassi Aya">
+      <label>Adresse e-mail</label>
+      <input type="email" id="signup-email" required placeholder="vous@exemple.org">
+      <label>Mot de passe (8 caractères minimum)</label>
+      <input type="password" id="signup-pass" required minlength="8" autocomplete="new-password">
+      <label>Confirmer le mot de passe</label>
+      <input type="password" id="signup-pass2" required minlength="8" autocomplete="new-password">
+      <p id="signup-msg" style="display:none;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;margin:8px 0 0;"></p>
+      <button type="submit" id="signup-submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;">Envoyer ma demande</button>
+      <p style="text-align:center;margin-top:14px;font-size:13px;"><a href="#" id="admin-show-login" style="color:var(--green-700);font-weight:700;">← Retour à la connexion</a></p>
+    </form>
   </div>
 </div>
 
@@ -674,6 +691,7 @@
       <button type="button" class="admin-tab" id="admin-tab-btn-domains" data-tab="domains">Domaines de recherche</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-gallery" data-tab="gallery">Galerie</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-content" data-tab="content">Contenu du site (hero &amp; à propos)</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-registrations" data-tab="registrations">Inscriptions</button>
     </div>
 
     <div class="admin-tab-panel" id="admin-tab-news">
@@ -714,6 +732,11 @@
     <div class="admin-tab-panel" id="admin-tab-gallery" style="display:none;">
       <div id="admin-gallery-list"></div>
       <button type="button" class="btn btn-outline" id="admin-add-gallery" style="margin-top:6px;">+ Ajouter une photo</button>
+    </div>
+
+    <div class="admin-tab-panel" id="admin-tab-registrations" style="display:none;">
+      <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;">Les chercheurs inscrits depuis le site apparaissent ici. Ils ne peuvent publier qu'après votre approbation.</p>
+      <div id="admin-registrations-list"></div>
     </div>
 
     <div class="admin-tab-panel" id="admin-tab-content" style="display:none;">
@@ -1774,13 +1797,14 @@
     }
     function openAdminLogin(e){
       if (e) e.preventDefault();
-      sb.auth.getSession().then(({ data }) => {
+      sb.auth.getSession().then(async ({ data }) => {
         const u = data && data.session && data.session.user;
-        const r = u && u.user_metadata && u.user_metadata.role;
+        const r = u ? (await resolveRole(u)).role : null;
         if (r === 'admin' || r === 'chercheur') enterAdmin(r); else showAdminLogin();
       });
     }
     function showAdminLogin(){
+      if (typeof toggleSignup === 'function') toggleSignup(false);
       adminLoginError.style.display = 'none';
       adminLoginForm.reset();
       document.getElementById('admin-user').value = '';
@@ -1798,7 +1822,7 @@
       adminPassInput.type = adminPassInput.type === 'password' ? 'text' : 'password';
     });
 
-    const ADMIN_ONLY_TABS = ['projects', 'team', 'partners', 'publications', 'documents', 'domains', 'gallery', 'content'];
+    const ADMIN_ONLY_TABS = ['registrations', 'projects', 'team', 'partners', 'publications', 'documents', 'domains', 'gallery', 'content'];
 
     function applyRolePermissions(){
       const badge = document.getElementById('admin-role-badge');
@@ -1828,6 +1852,7 @@
 
     async function enterAdmin(role){
         currentRole = role;
+        if (role === 'admin') loadRegistrations();
         adminLoginOverlay.classList.remove('open');
         renderAdminList();
         if (role === 'admin') {
@@ -1848,6 +1873,97 @@
 
     }
 
+    // Rôle réel = table `profiles` (seul un compte « approved » est admis)
+    async function resolveRole(user){
+      const { data: p, error } = await sb.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
+      if (!error && p){
+        if (p.status === 'approved' && (p.role === 'admin' || p.role === 'chercheur')) return { role: p.role, status: p.status };
+        return { role: null, status: p.status };
+      }
+      // Anciens comptes sans profil : repli sur les métadonnées (la base reste protégée par ses règles)
+      const legacy = user.user_metadata && user.user_metadata.role;
+      return { role: (legacy === 'admin' || legacy === 'chercheur') ? legacy : null, status: null };
+    }
+
+    // ---- Inscription des chercheurs ----
+    const signupForm = document.getElementById('admin-signup-form');
+    const signupMsg = document.getElementById('signup-msg');
+    function showSignupMsg(text, ok){
+      signupMsg.textContent = text;
+      signupMsg.style.display = 'block';
+      signupMsg.style.background = ok ? 'var(--green-100)' : '#FBEAEA';
+      signupMsg.style.color = ok ? 'var(--green-700)' : '#C0392B';
+    }
+    function toggleSignup(show){
+      signupForm.style.display = show ? 'block' : 'none';
+      adminLoginForm.style.display = show ? 'none' : 'block';
+      document.getElementById('admin-signup-link-wrap').style.display = show ? 'none' : 'block';
+      adminLoginError.style.display = 'none';
+      signupMsg.style.display = 'none';
+    }
+    document.getElementById('admin-show-signup').addEventListener('click', (e) => { e.preventDefault(); toggleSignup(true); });
+    document.getElementById('admin-show-login').addEventListener('click', (e) => { e.preventDefault(); toggleSignup(false); });
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const pass = document.getElementById('signup-pass').value;
+      const btn = document.getElementById('signup-submit');
+      if (pass.length < 8) { showSignupMsg('Le mot de passe doit contenir au moins 8 caractères.', false); return; }
+      if (pass !== document.getElementById('signup-pass2').value) { showSignupMsg('Les deux mots de passe ne sont pas identiques.', false); return; }
+      btn.disabled = true; btn.textContent = 'Envoi…';
+      // Aucun rôle n'est transmis : tout nouveau compte est « chercheur / en attente » côté base
+      const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+      btn.disabled = false; btn.textContent = 'Envoyer ma demande';
+      if (error){
+        showSignupMsg(/registered|exists/i.test(error.message) ? 'Un compte existe déjà avec cette adresse e-mail.' : 'Inscription impossible : ' + error.message, false);
+        return;
+      }
+      if (data && data.session) await sb.auth.signOut(); // pas de connexion automatique avant validation
+      signupForm.reset();
+      showSignupMsg('✓ Demande envoyée. Vous pourrez vous connecter dès que l\'administrateur aura validé votre compte (si un e-mail de confirmation vous est envoyé, cliquez d\'abord sur son lien).', true);
+    });
+
+    // ---- Validation des inscriptions (administrateur) ----
+    const regList = document.getElementById('admin-registrations-list');
+    const regTabBtn = document.getElementById('admin-tab-btn-registrations');
+    async function loadRegistrations(){
+      if (!regList) return;
+      regList.innerHTML = '<p style="color:var(--ink-soft);font-size:13.5px;">Chargement…</p>';
+      const { data, error } = await sb.from('profiles').select('id,email,full_name,role,status,created_at').order('created_at', { ascending: false });
+      if (error){ regList.innerHTML = '<p style="color:#C0392B;font-size:13.5px;">Impossible de charger les inscriptions : ' + escapeHtml(error.message) + '</p>'; return; }
+      const order = { pending: 0, approved: 1, rejected: 2 };
+      const rows = (data || []).sort((a, b) => (order[a.status] - order[b.status]) || (new Date(b.created_at) - new Date(a.created_at)));
+      const pending = rows.filter((r) => r.status === 'pending').length;
+      regTabBtn.textContent = 'Inscriptions' + (pending ? ' (' + pending + ')' : '');
+      const label = { pending: ['En attente', '#FFF3DB', '#8A5A00'], approved: ['Approuvé', 'var(--green-100)', 'var(--green-700)'], rejected: ['Refusé', '#FBEAEA', '#C0392B'] };
+      regList.innerHTML = rows.length ? rows.map((r) => {
+        const l = label[r.status] || label.pending;
+        const isAdminRow = r.role === 'admin';
+        const btn = (st, txt, cls) => '<button type="button" class="btn ' + cls + '" data-reg="' + r.id + '" data-status="' + st + '" style="padding:7px 14px;font-size:12.5px;">' + txt + '</button>';
+        let actions = '';
+        if (!isAdminRow){
+          if (r.status !== 'approved') actions += btn('approved', 'Approuver', 'btn-primary');
+          if (r.status === 'pending') actions += btn('rejected', 'Refuser', 'btn-outline');
+          if (r.status === 'approved') actions += btn('rejected', 'Révoquer l\'accès', 'btn-outline');
+        }
+        return '<div class="admin-news-item" style="grid-template-columns:1fr auto;align-items:center;">' +
+          '<div><strong style="font-size:14.5px;">' + escapeHtml(r.full_name || '(nom non renseigné)') + '</strong>' +
+          '<div style="font-size:12.5px;color:var(--ink-soft);">' + escapeHtml(r.email || '') + ' · ' + (r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '') + (isAdminRow ? ' · Administrateur' : '') + '</div></div>' +
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">' +
+          '<span style="font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:' + l[1] + ';color:' + l[2] + ';">' + l[0] + '</span>' + actions + '</div></div>';
+      }).join('') : '<p style="color:var(--ink-soft);font-size:13.5px;">Aucune inscription pour le moment.</p>';
+    }
+    regList.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-reg]');
+      if (!b || currentRole !== 'admin') return;
+      b.disabled = true;
+      const { error } = await sb.from('profiles').update({ status: b.dataset.status }).eq('id', b.dataset.reg);
+      if (error) alert('Action refusée : ' + error.message);
+      loadRegistrations();
+    });
+    regTabBtn.addEventListener('click', loadRegistrations);
+
     const adminLoginSubmitBtn = adminLoginForm.querySelector('button[type="submit"]');
 
     adminLoginForm.addEventListener('submit', async (e) => {
@@ -1863,15 +1979,22 @@
       adminLoginSubmitBtn.disabled = false;
       adminLoginSubmitBtn.textContent = 'Se connecter';
 
-      const role = !error && data.user ? (data.user.user_metadata && data.user.user_metadata.role) : null;
+      const res = !error && data.user ? await resolveRole(data.user) : { role: null };
+      const role = res.role;
 
       if (!error && (role === 'admin' || role === 'chercheur')) {
         await enterAdmin(role);
       } else {
         currentRole = null;
         await sb.auth.signOut();
-        if (!error && !role) {
-          adminLoginError.textContent = '⚠ Ce compte existe mais n\'a pas de rôle (admin/chercheur) configuré. Contacte l\'administrateur.';
+        if (!error && res.status === 'pending') {
+          adminLoginError.textContent = '⏳ Votre inscription est en attente de validation par l\'administrateur.';
+        } else if (!error && res.status === 'rejected') {
+          adminLoginError.textContent = '⚠ Votre demande d\'accès a été refusée. Contactez l\'administrateur.';
+        } else if (!error && !role) {
+          adminLoginError.textContent = '⚠ Ce compte n\'a pas de profil autorisé. Contactez l\'administrateur.';
+        } else if (error && /confirm/i.test(error.message || '')) {
+          adminLoginError.textContent = '⚠ Adresse e-mail non confirmée : cliquez sur le lien reçu par e-mail.';
         } else {
           adminLoginError.textContent = '⚠ Adresse e-mail ou mot de passe incorrect.';
         }
@@ -1889,8 +2012,9 @@
     });
 
     // Si une session existe déjà (ex. page rechargée après connexion), on la restaure
-    sb.auth.getSession().then(({ data }) => {
-      const role = data.session && data.session.user.user_metadata && data.session.user.user_metadata.role;
+    sb.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      const role = (await resolveRole(data.session.user)).role;
       if (role === 'admin' || role === 'chercheur') currentRole = role;
     });
 
@@ -1944,7 +2068,8 @@
       documents: document.getElementById('admin-tab-documents'),
       domains: document.getElementById('admin-tab-domains'),
       gallery: document.getElementById('admin-tab-gallery'),
-      content: document.getElementById('admin-tab-content')
+      content: document.getElementById('admin-tab-content'),
+      registrations: document.getElementById('admin-tab-registrations')
     };
     tabButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
