@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Administration — CEMV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g9:#0E2A1F; --g8:#123C2B; --g7:#1B4D3A; --g6:#1F7A4D; --g5:#2E9E63; --g1:#E7F5EC; --g0:#F3FAF5;
+  --ink:#132018; --soft:#4B5A52; --line:#E1EAE4; --red:#C0392B; --redbg:#FBEAEA; --amber:#9A6A00; --amberbg:#FFF4D6;
+  --r:12px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;font-family:'Inter',sans-serif;color:var(--ink);background:var(--g0);line-height:1.5;font-size:14.5px}
+h1,h2,h3{font-family:'Poppins',sans-serif;color:var(--g9);margin:0;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--g5);outline-offset:2px}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--g6);background:var(--g6);color:#fff;padding:9px 18px;border-radius:999px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn:hover{background:var(--g7)}
+.btn.ghost{background:#fff;color:var(--g7);border-color:var(--line)}
+.btn.ghost:hover{background:var(--g1)}
+.btn.danger{background:var(--red);border-color:var(--red)}
+.btn.sm{padding:5px 12px;font-size:13px}
+.btn[disabled]{opacity:.55;cursor:wait}
+.icon-btn{border:1px solid var(--line);background:#fff;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--soft)}
+.icon-btn:hover{background:var(--g1);color:var(--g7)}
+.icon-btn[disabled]{opacity:.3;cursor:default}
+
+/* Connexion */
+.auth{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,#fff,var(--g0))}
+.auth-card{width:100%;max-width:410px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:32px;box-shadow:0 12px 30px -14px rgba(14,42,31,.25)}
+.auth-card h1{font-size:22px;margin-bottom:4px}
+.auth-card .lede{color:var(--soft);margin:0 0 20px;font-size:13.5px}
+.tabs{display:flex;gap:4px;background:var(--g0);padding:4px;border-radius:999px;margin-bottom:20px}
+.tabs button{flex:1;border:0;background:none;padding:8px;border-radius:999px;font-weight:600;color:var(--soft);cursor:pointer}
+.tabs button[aria-selected=true]{background:#fff;color:var(--g7);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.msg{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px}
+.msg.err{background:var(--redbg);color:var(--red)}
+.msg.ok{background:var(--g1);color:var(--g7)}
+.linklike{background:none;border:0;color:var(--g6);font-weight:600;cursor:pointer;padding:0}
+.linklike:hover{text-decoration:underline}
+
+/* Champs */
+.f{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.f>label,.f>.lbl{font-size:12.5px;font-weight:600;color:var(--g8)}
+.f input[type=text],.f input[type=email],.f input[type=password],.f input[type=date],.f input[type=search],.f select,.f textarea{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--g5);outline:none}
+.f textarea{resize:vertical;min-height:84px}
+.hint{margin:0;font-size:12px;color:var(--soft)}
+.grid{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+.grid .wide{grid-column:1/-1}
+
+/* Application */
+.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+.side{background:var(--g9);color:#CFE0D5;position:sticky;top:0;height:100vh;padding:20px 12px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.brand{display:flex;flex-direction:column;padding:4px 10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
+.brand b{font-family:'Poppins',sans-serif;font-size:19px;color:#fff}
+.brand span{font-size:12px;color:#8FAB9B}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.nav button{display:flex;justify-content:space-between;align-items:center;border:0;background:none;color:#CFE0D5;text-align:left;padding:9px 10px;border-radius:9px;cursor:pointer;font-weight:500}
+.nav button:hover{background:rgba(255,255,255,.07)}
+.nav button[aria-current=page]{background:var(--g6);color:#fff;font-weight:600}
+.pill{background:#E8B931;color:#3b2c00;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px}
+.me{font-size:12.5px;border-top:1px solid rgba(255,255,255,.12);padding:12px 10px 0;display:flex;flex-direction:column;gap:8px}
+.me b{color:#fff;display:block;word-break:break-all}
+.me a,.me button{color:#9fd8b6;background:none;border:0;padding:0;text-align:left;cursor:pointer;font-size:12.5px;text-decoration:none}
+.me a:hover,.me button:hover{text-decoration:underline}
+.main{padding:28px 32px 60px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.top h1{font-size:24px}
+.top .sub{color:var(--soft);margin:2px 0 0}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.bar input[type=search]{flex:1;min-width:200px;max-width:380px;border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;background:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:13px;cursor:pointer;color:var(--soft)}
+.chip[aria-pressed=true]{background:var(--g6);color:#fff;border-color:var(--g6)}
+
+/* Liste */
+.list{list-style:none;margin:0;padding:0;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.row{display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--g0)}
+.th{width:56px;height:44px;border-radius:8px;background:var(--g1) center/cover;overflow:hidden;display:grid;place-items:center;color:var(--g6);font-weight:700}
+.th img{width:100%;height:100%;object-fit:cover}
+.tx{min-width:0;cursor:pointer}
+.tx b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx span{display:block;font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac{display:flex;gap:6px;align-items:center}
+.empty{background:#fff;border:1px dashed var(--line);border-radius:var(--r);padding:40px;text-align:center;color:var(--soft)}
+.badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}
+.b-pending{background:var(--amberbg);color:var(--amber)}
+.b-approved{background:var(--g1);color:var(--g7)}
+.b-rejected{background:var(--redbg);color:var(--red)}
+
+/* Tableau de bord */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;text-align:left;cursor:pointer}
+.card:hover{border-color:var(--g5)}
+.card b{font-family:'Poppins',sans-serif;font-size:28px;color:var(--g7);display:block;line-height:1.1}
+.card span{color:var(--soft);font-size:13px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin-bottom:18px}
+.panel h2{font-size:17px;margin-bottom:4px}
+.panel>p{color:var(--soft);margin:0 0 14px}
+.log{background:var(--g0);border-radius:8px;padding:10px 12px;font-size:12.5px;max-height:160px;overflow:auto;white-space:pre-wrap;margin-top:10px}
+
+/* Tiroir d'édition */
+.ov{position:fixed;inset:0;background:rgba(14,42,31,.45);z-index:40;display:flex;justify-content:flex-end}
+.drawer{width:min(720px,100%);height:100%;background:#fff;display:flex;flex-direction:column;box-shadow:-20px 0 40px -20px rgba(0,0,0,.3)}
+.drawer>header{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line)}
+.drawer>header h2{font-size:18px}
+.dr-body{flex:1;overflow-y:auto;padding:20px 22px}
+.drawer>footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--line);background:var(--g0)}
+
+/* Widgets */
+.imgctl .prev{width:100%;max-width:300px;aspect-ratio:4/3;border:1.5px dashed var(--line);border-radius:10px;background:var(--g0);display:grid;place-items:center;color:var(--soft);overflow:hidden;font-size:13px}
+.imgctl .prev img{width:100%;height:100%;object-fit:cover}
+.imgctl .prev.busy{opacity:.5}
+.btns{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+label.btn input{display:none}
+details{margin-top:6px;font-size:12.5px;color:var(--soft)}
+details input{margin-top:6px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.thumbs figure{margin:0;position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--g0)}
+.thumbs img{width:100%;height:100%;object-fit:cover}
+.thumbs button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;line-height:1}
+.files .fr{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.files .fr small{grid-column:1/-1;color:var(--soft);word-break:break-all;margin-top:-4px}
+.rel .list2{max-height:190px;overflow-y:auto;border:1.5px solid var(--line);border-radius:10px;margin-top:6px;padding:4px 10px}
+.rel label{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-weight:400;font-size:13.5px;color:var(--ink)}
+.focus-wrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.focus-prev{width:96px;height:96px;border-radius:50%;overflow:hidden;background:var(--g1);flex-shrink:0}
+.focus-prev img{width:100%;height:100%;object-fit:cover}
+.focus-wrap .sl{flex:1;min-width:180px;font-size:12.5px;color:var(--soft)}
+.focus-wrap input[type=range]{width:100%}
+
+/* Chiffres clés */
+.stat{display:grid;grid-template-columns:1.3fr .8fr 70px 1.5fr 1.5fr 1fr auto;gap:8px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}
+.stat .f{margin:0}
+.stat select,.stat input{padding:7px 10px!important}
+
+/* Dialogue + toasts */
+dialog{border:0;border-radius:16px;padding:0;max-width:420px;width:calc(100% - 32px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(14,42,31,.5)}
+dialog form{padding:24px}
+dialog h3{margin-bottom:8px}
+dialog p{margin:0 0 18px;color:var(--soft)}
+.dlg-ac{display:flex;justify-content:flex-end;gap:8px}
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:90;align-items:center}
+.toast{background:var(--g9);color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw}
+.toast.err{background:var(--red)}
+
+@media(max-width:1100px){.stat{grid-template-columns:1fr 1fr}.stat .wide2{grid-column:1/-1}}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:column}
+  .nav{flex-direction:row;overflow-x:auto;gap:6px}
+  .nav button{white-space:nowrap}
+  .main{padding:20px 16px 60px}
+  .grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ============ Connexion ============ -->
+<div class="auth" id="auth">
+  <div class="auth-card">
+    <h1>Administration du CEMV</h1>
+    <p class="lede">Espace réservé à l'équipe du centre.</p>
+    <div class="tabs" role="tablist" id="auth-tabs">
+      <button role="tab" data-p="login" aria-selected="true">Connexion</button>
+      <button role="tab" data-p="signup" aria-selected="false">Demander un accès</button>
+    </div>
+    <div class="msg" id="auth-msg" hidden></div>
+
+    <form id="p-login" class="panel-auth">
+      <div class="f"><label for="l-email">Adresse e-mail</label><input id="l-email" type="email" required autocomplete="username"></div>
+      <div class="f"><label for="l-pass">Mot de passe</label><input id="l-pass" type="password" required autocomplete="current-password"></div>
+      <button class="btn" style="width:100%;justify-content:center">Se connecter</button>
+      <p style="text-align:center;margin:14px 0 0"><button type="button" class="linklike" data-go="forgot">Mot de passe oublié ?</button></p>
+    </form>
+
+    <form id="p-signup" class="panel-auth" hidden>
+      <div class="f"><label for="s-name">Nom complet</label><input id="s-name" type="text" required autocomplete="name"></div>
+      <div class="f"><label for="s-email">Adresse e-mail</label><input id="s-email" type="email" required autocomplete="email"></div>
+      <div class="f"><label for="s-pass">Mot de passe (8 caractères minimum)</label><input id="s-pass" type="password" required minlength="8" autocomplete="new-password"></div>
+      <button class="btn" style="width:100%;justify-content:center">Envoyer ma demande</button>
+      <p class="hint" style="margin-top:12px">Un administrateur doit approuver votre compte avant que vous puissiez publier.</p>
+    </form>
+
+    <form id="p-forgot" class="panel-auth" hidden>
+      <div class="f"><label for="f-email">Adresse e-mail</label><input id="f-email" type="email" required></div>
+      <button class="btn" style="width:100%;justify-content:center">Recevoir un lien de réinitialisation</button>
+      <p style="text-align:center;margin:14px 0 0"><button type="button" class="linklike" data-go="login">Retour à la connexion</button></p>
+    </form>
+
+    <form id="p-reset" class="panel-auth" hidden>
+      <div class="f"><label for="r-pass">Nouveau mot de passe (8 caractères minimum)</label><input id="r-pass" type="password" required minlength="8" autocomplete="new-password"></div>
+      <button class="btn" style="width:100%;justify-content:center">Enregistrer le mot de passe</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Application ============ -->
+<div class="app" id="app" hidden>
+  <aside class="side">
+    <div class="brand"><b>CEMV</b><span>Administration du site</span></div>
+    <nav class="nav" id="nav" aria-label="Sections"></nav>
+    <div class="me">
+      <div><b id="me-name"></b><span id="me-role" style="color:#8FAB9B"></span></div>
+      <a href="index.html" target="_blank" rel="noopener">Voir le site</a>
+      <button id="logout">Se déconnecter</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="top"><div><h1 id="title"></h1><p class="sub" id="subtitle"></p></div><div id="actions"></div></div>
+    <div id="view"></div>
+  </main>
+</div>
+
+<div class="ov" id="ov" hidden><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title"></aside></div>
+<dialog id="dlg"></dialog>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+'use strict';
+
+/* ---------- Connexion à Supabase ---------- */
+const SB_URL = 'https://ermnggfazzdzcjstjytz.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVybW5nZ2ZhenpkemNqc3RqeXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MTQ0NjMsImV4cCI6MjEwNTM5MDQ2M30.RWRfHftIRHoh9Z6KRrQxW98qbg_mP14hxYfruc5d61Q';
+const BUCKET = 'cemv-media';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+/* ---------- Utilitaires ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const strip = s => String(s ?? '').replace(/<[^>]+>/g, '');
+const h = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const MOIS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+const fmtFr = iso => { const [y, m, d] = iso.split('-'); return `${d} ${MOIS[+m - 1]} ${y}`; };
+const today = () => new Date().toISOString().slice(0, 10);
+
+function toast(msg, type = 'ok') {
+  const t = h(`<div class="toast ${type === 'err' ? 'err' : ''}">${esc(msg)}</div>`);
+  $('#toasts').appendChild(t);
+  setTimeout(() => t.remove(), type === 'err' ? 7000 : 3000);
+}
+function errMsg(e) {
+  const m = (e && e.message) || String(e);
+  if (/does not exist|schema cache|could not find/i.test(m)) return m + ' — exécutez supabase-setup-v7.sql dans Supabase (SQL Editor).';
+  if (/row-level security|permission denied/i.test(m)) return 'Action refusée par la base de données (droits insuffisants).';
+  if (/Bucket not found/i.test(m)) return 'Espace de stockage introuvable — exécutez supabase-setup-v7.sql.';
+  return m;
+}
+function ask(title, msg, ok = 'Confirmer', danger = false) {
+  const dlg = $('#dlg');
+  return new Promise(res => {
+    dlg.innerHTML = `<form method="dialog"><h3>${esc(title)}</h3><p>${esc(msg)}</p><div class="dlg-ac"><button value="cancel" class="btn ghost">Annuler</button><button value="ok" class="btn ${danger ? 'danger' : ''}">${esc(ok)}</button></div></form>`;
+    dlg.returnValue = 'cancel';
+    dlg.onclose = () => res(dlg.returnValue === 'ok');
+    dlg.showModal();
+  });
+}
+
+/* ---------- Envoi de fichiers (Supabase Storage) ---------- */
+async function prepImage(file, keepAlpha) {
+  if (['image/svg+xml', 'image/gif'].includes(file.type)) return { blob: file, ext: file.type === 'image/gif' ? 'gif' : 'svg' };
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, keepAlpha ? 'image/png' : 'image/webp', .86));
+  return { blob, ext: blob.type === 'image/webp' ? 'webp' : 'png' };
+}
+async function uploadFile(file, folder, opts = {}) {
+  if (file.size > 20 * 1024 * 1024) throw new Error('Fichier trop volumineux (20 Mo maximum).');
+  let blob = file, ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+  if (file.type.startsWith('image/')) {
+    try { ({ blob, ext } = await prepImage(file, opts.alpha)); }
+    catch { throw new Error('Image illisible. Utilisez un fichier JPG, PNG ou WebP.'); }
+  }
+  const path = `${folder}/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type || file.type, cacheControl: '31536000' });
+  if (error) throw error;
+  return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+/* ---------- Données auxiliaires (listes pour les liens entre contenus) ---------- */
+const cache = {};
+const COLS = { publications: 'id,title,year', projects: 'id,title', team: 'id,name', domains: 'id,title' };
+const LABEL = { publications: r => r.title + (r.year ? ` (${r.year})` : ''), projects: r => r.title, team: r => r.name, domains: r => r.title };
+async function listOf(t) {
+  if (cache[t]) return cache[t];
+  const { data, error } = await sb.from(t).select(COLS[t]).order('sort_order', { ascending: true }).order('id');
+  if (error) throw error;
+  return (cache[t] = data);
+}
+
+/* ---------- Définition des sections du CMS ---------- */
+const TAGS = [['recherche', 'Recherche'], ['evenement', 'Événement'], ['partenariat', 'Partenariat']];
+const CATS = ['Laboratoires', 'Terrain', 'Formations', 'Conférences', 'Missions', 'Équipements'].map(c => [c, c]);
+const STATUS = [['en_cours', 'En cours'], ['termine', 'Terminé'], ['a_venir', 'À venir']];
+const lab = (list, v) => (list.find(x => x[0] === v) || [, v || ''])[1];
+
+const SECTIONS = {
+  news: {
+    label: 'Actualités', table: 'news', roles: ['admin', 'chercheur'], noun: 'une actualité', newFirst: true, track: true,
+    filter: { key: 'tag', options: TAGS },
+    thumb: r => r.img, title: r => strip(r.title), sub: r => [r.date, lab(TAGS, r.tag), r.author].filter(Boolean).join(', '),
+    blank: { tag: 'recherche', images: [], documents: [], publication_ids: [] },
+    fields: [
+      { key: 'title', label: 'Titre', type: 'text', req: true, help: 'Pour mettre un mot en italique : &lt;em&gt;mot&lt;/em&gt;' },
+      { key: 'tag', label: 'Catégorie', type: 'select', options: TAGS },
+      { key: 'published_on', label: 'Date de publication', type: 'date' },
+      { key: 'author', label: 'Auteur', type: 'text' },
+      { key: 'img', label: 'Image principale', type: 'image' },
+      { key: 'summary', label: 'Résumé', type: 'textarea', rows: 3, help: 'Quelques lignes affichées dans les listes.' },
+      { key: 'content', label: 'Contenu complet', type: 'textarea', rows: 12, help: 'Séparez les paragraphes par une ligne vide.' },
+      { key: 'images', label: 'Photos de l’article', type: 'images' },
+      { key: 'documents', label: 'Documents joints', type: 'files' },
+      { key: 'publication_ids', label: 'Publications associées', type: 'relation', table: 'publications' }
+    ],
+    beforeSave(p, d, isNew) {
+      if (p.published_on) p.date = fmtFr(p.published_on);
+      else if (isNew) { p.published_on = today(); p.date = fmtFr(p.published_on); }
+    }
+  },
+  publications: {
+    label: 'Publications', table: 'publications', roles: ['admin'], noun: 'une publication',
+    thumb: () => null, title: r => r.title, sub: r => [r.authors, r.year, r.source].filter(Boolean).join(', '),
+    blank: {},
+    fields: [
+      { key: 'title', label: 'Titre', type: 'textarea', rows: 2, req: true },
+      { key: 'authors', label: 'Auteur(s)', type: 'text' },
+      { key: 'year', label: 'Année', type: 'text' },
+      { key: 'domain', label: 'Domaine', type: 'combo', source: 'domains' },
+      { key: 'source', label: 'Revue / source', type: 'text' },
+      { key: 'doi', label: 'DOI', type: 'text', help: 'Exemple : 10.1234/abcd.2025.001' },
+      { key: 'abstract', label: 'Résumé', type: 'textarea', rows: 6 },
+      { key: 'file_url', label: 'PDF (bouton « Télécharger »)', type: 'file', accept: '.pdf' },
+      { key: 'online_url', label: 'Lien « Lire en ligne »', type: 'text', help: 'Adresse de la publication chez l’éditeur.' }
+    ]
+  },
+  team: {
+    label: 'Chercheurs', table: 'team', roles: ['admin'], noun: 'un chercheur',
+    thumb: r => r.photo, title: r => r.name, sub: r => [r.role, r.speciality].filter(Boolean).join(', '),
+    blank: { photo_x: 50, photo_y: 50, publication_ids: [], project_ids: [] },
+    fields: [
+      { key: 'name', label: 'Nom', type: 'text', req: true },
+      { key: 'role', label: 'Fonction', type: 'text', req: true },
+      { key: 'speciality', label: 'Spécialité', type: 'text' },
+      { key: 'email', label: 'E-mail professionnel', type: 'email' },
+      { key: 'photo', label: 'Photo', type: 'image', folder: 'team' },
+      { type: 'focus', keys: ['photo_x', 'photo_y'], image: 'photo', label: 'Cadrage de la photo' },
+      { key: 'bio', label: 'Biographie', type: 'textarea', rows: 6 },
+      { key: 'orcid', label: 'ORCID', type: 'text', help: 'Exemple : https://orcid.org/0000-0000-0000-0000' },
+      { key: 'scholar', label: 'Google Scholar', type: 'text', help: 'Adresse du profil.' },
+      { key: 'project_ids', label: 'Projets', type: 'relation', table: 'projects' },
+      { key: 'publication_ids', label: 'Publications', type: 'relation', table: 'publications' }
+    ]
+  },
+  projects: {
+    label: 'Projets', table: 'projects', roles: ['admin'], noun: 'un projet',
+    filter: { key: 'status', options: STATUS },
+    thumb: r => r.img, title: r => r.title, sub: r => [lab(STATUS, r.status), r.lead, r.funding].filter(Boolean).join(', '),
+    blank: { status: 'en_cours', photos: [], publication_ids: [] },
+    fields: [
+      { key: 'title', label: 'Nom du projet', type: 'text', req: true },
+      { key: 'status', label: 'Statut', type: 'select', options: STATUS },
+      { key: 'lead', label: 'Responsable', type: 'text' },
+      { key: 'funding', label: 'Financement', type: 'text' },
+      { key: 'start_date', label: 'Date de début', type: 'date' },
+      { key: 'end_date', label: 'Date de fin', type: 'date' },
+      { key: 'partners', label: 'Partenaires', type: 'text', wide: true, help: 'Séparez les noms par des virgules.' },
+      { key: 'description', label: 'Description courte', type: 'textarea', rows: 3 },
+      { key: 'objectives', label: 'Objectifs', type: 'textarea', rows: 5 },
+      { key: 'results', label: 'Résultats', type: 'textarea', rows: 5 },
+      { key: 'img', label: 'Image principale', type: 'image' },
+      { key: 'photos', label: 'Photos du projet', type: 'images' },
+      { key: 'publication_ids', label: 'Publications associées', type: 'relation', table: 'publications' }
+    ]
+  },
+  partners: {
+    label: 'Partenaires', table: 'partners', roles: ['admin'], noun: 'un partenaire',
+    thumb: r => r.logo, title: r => r.name, sub: r => r.website || '',
+    blank: {},
+    fields: [
+      { key: 'name', label: 'Nom du partenaire', type: 'text', req: true },
+      { key: 'website', label: 'Site web', type: 'text' },
+      { key: 'logo', label: 'Logo', type: 'image', alpha: true }
+    ]
+  },
+  gallery: {
+    label: 'Galerie', table: 'gallery', roles: ['admin'], noun: 'une photo', bulk: true,
+    filter: { key: 'category', options: CATS },
+    thumb: r => r.img, title: r => r.caption || 'Photo sans légende', sub: r => [r.category, r.place, r.taken_on && fmtFr(r.taken_on)].filter(Boolean).join(', '),
+    blank: {},
+    fields: [
+      { key: 'img', label: 'Photo', type: 'image', req: true },
+      { key: 'caption', label: 'Légende', type: 'text' },
+      { key: 'category', label: 'Catégorie', type: 'select', options: [['', 'Sans catégorie'], ...CATS] },
+      { key: 'place', label: 'Lieu', type: 'text' },
+      { key: 'taken_on', label: 'Date', type: 'date' },
+      { key: 'project_id', label: 'Projet associé', type: 'ref', table: 'projects' }
+    ]
+  },
+  documents: {
+    label: 'Documents', table: 'documents', roles: ['admin'], noun: 'un document',
+    thumb: () => null, title: r => r.title, sub: r => r.file_url || '',
+    blank: {},
+    fields: [
+      { key: 'title', label: 'Titre du document', type: 'text', req: true },
+      { key: 'file_url', label: 'Fichier', type: 'file', req: true, accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv' }
+    ]
+  },
+  domains: {
+    label: 'Domaines', table: 'domains', roles: ['admin'], noun: 'un domaine de recherche',
+    thumb: r => r.img, title: r => r.title, sub: r => [r.badge, r.description].filter(Boolean).join(', '),
+    blank: {},
+    fields: [
+      { key: 'title', label: 'Titre du domaine', type: 'text', req: true },
+      { key: 'badge', label: 'Étiquette (ex. « Nouveau »)', type: 'text' },
+      { key: 'description', label: 'Description', type: 'textarea', rows: 4 },
+      { key: 'img', label: 'Photo', type: 'image' }
+    ]
+  }
+};
+Object.entries(SECTIONS).forEach(([k, s]) => s.key = k);
+
+const HOME_FIELDS = [
+  { key: 'hero_title', label: 'Titre principal', type: 'textarea', rows: 2, req: true, help: 'Balises autorisées, par exemple &lt;span class="accent"&gt;mots en couleur&lt;/span&gt;.' },
+  { key: 'hero_desc', label: 'Texte d’introduction', type: 'textarea', rows: 3, req: true },
+  { key: 'hero_img', label: 'Image d’en-tête', type: 'image', req: true, folder: 'home' },
+  { key: 'about_title', label: 'Titre « À propos »', type: 'text', req: true },
+  { key: 'about_p1', label: 'Paragraphe 1', type: 'textarea', rows: 3, req: true },
+  { key: 'about_p2', label: 'Paragraphe 2', type: 'textarea', rows: 3, req: true },
+  { key: 'about_img', label: 'Image « À propos »', type: 'image', req: true, folder: 'home' }
+];
+
+const NAV = [
+  ['dash', 'Tableau de bord', ['admin']], ['news', 'Actualités', ['admin', 'chercheur']],
+  ['publications', 'Publications', ['admin']], ['team', 'Chercheurs', ['admin']], ['projects', 'Projets', ['admin']],
+  ['partners', 'Partenaires', ['admin']], ['gallery', 'Galerie', ['admin']], ['documents', 'Documents', ['admin']],
+  ['domains', 'Domaines', ['admin']], ['home', 'Accueil et chiffres', ['admin']], ['users', 'Utilisateurs', ['admin']]
+];
+
+/* ---------- Champs de formulaire ---------- */
+function buildField(f, draft, ctx) {
+  if (f.type === 'focus') return focusField(f, draft, ctx);
+  const id = 'fld_' + f.key;
+  const wideTypes = ['textarea', 'images', 'files', 'relation', 'image', 'file'];
+  const w = h(`<div class="f ${f.wide || wideTypes.includes(f.type) ? 'wide' : ''}"><${['image', 'images', 'files', 'file', 'relation'].includes(f.type) ? 'span class="lbl"' : `label for="${id}"`}>${esc(f.label)}${f.req ? ' *' : ''}</${['image', 'images', 'files', 'file', 'relation'].includes(f.type) ? 'span' : 'label'}><div class="ctl"></div>${f.help ? `<p class="hint">${f.help}</p>` : ''}</div>`);
+  const ctl = $('.ctl', w);
+  const bind = el => { el.addEventListener('input', () => { draft[f.key] = el.value; ctx.dirty(); }); return el; };
+  switch (f.type) {
+    case 'text': case 'email': case 'date': {
+      const el = h(`<input id="${id}" type="${f.type === 'email' ? 'email' : f.type === 'date' ? 'date' : 'text'}">`);
+      el.value = draft[f.key] ?? ''; ctl.appendChild(bind(el)); break;
+    }
+    case 'textarea': {
+      const el = h(`<textarea id="${id}" rows="${f.rows || 4}"></textarea>`);
+      el.value = draft[f.key] ?? ''; ctl.appendChild(bind(el)); break;
+    }
+    case 'select': case 'ref': {
+      const opts = f.type === 'ref'
+        ? [['', 'Aucun'], ...(cache[f.table] || []).map(r => [String(r.id), LABEL[f.table](r)])]
+        : f.options;
+      const el = h(`<select id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`);
+      el.value = draft[f.key] == null ? '' : String(draft[f.key]);
+      ctl.appendChild(bind(el)); break;
+    }
+    case 'combo': {
+      const el = h(`<input id="${id}" type="text" list="dl_${f.key}">`);
+      el.value = draft[f.key] ?? '';
+      ctl.appendChild(bind(el));
+      ctl.appendChild(h(`<datalist id="dl_${f.key}">${(cache[f.source] || []).map(r => `<option value="${esc(LABEL[f.source](r))}">`).join('')}</datalist>`));
+      break;
+    }
+    case 'image': ctl.appendChild(imageField(f, draft, ctx)); break;
+    case 'images': ctl.appendChild(imagesField(f, draft, ctx)); break;
+    case 'file': ctl.appendChild(fileField(f, draft, ctx)); break;
+    case 'files': ctl.appendChild(filesField(f, draft, ctx)); break;
+    case 'relation': ctl.appendChild(relationField(f, draft, ctx)); break;
+  }
+  return w;
+}
+
+function imageField(f, draft, ctx) {
+  const box = h('<div class="imgctl"></div>');
+  const draw = () => {
+    const v = draft[f.key];
+    box.innerHTML = `<div class="prev">${v ? `<img src="${esc(v)}" alt="">` : '<span>Aucune image</span>'}</div>
+      <div class="btns"><label class="btn sm">${v ? 'Remplacer' : 'Téléverser'}<input type="file" accept="image/*"></label>${v ? '<button type="button" class="btn sm ghost" data-rm>Retirer</button>' : ''}</div>
+      <details><summary>Ou coller l’adresse d’une image</summary><input type="text" placeholder="https://…" value="${v && !v.startsWith('data:') ? esc(v) : ''}"></details>`;
+    $('input[type=file]', box).onchange = async e => {
+      const file = e.target.files[0]; if (!file) return;
+      $('.prev', box).classList.add('busy');
+      try { draft[f.key] = await uploadFile(file, f.folder || ctx.folder, { alpha: f.alpha }); ctx.dirty(); ctx.emit(); }
+      catch (err) { toast(errMsg(err), 'err'); }
+      draw();
+    };
+    const rm = $('[data-rm]', box); if (rm) rm.onclick = () => { draft[f.key] = null; ctx.dirty(); ctx.emit(); draw(); };
+    $('details input', box).onchange = e => { draft[f.key] = e.target.value.trim() || null; ctx.dirty(); ctx.emit(); draw(); };
+  };
+  draw(); return box;
+}
+
+function imagesField(f, draft, ctx) {
+  const box = h('<div></div>');
+  draft[f.key] = Array.isArray(draft[f.key]) ? draft[f.key] : [];
+  const draw = () => {
+    box.innerHTML = `<div class="thumbs">${draft[f.key].map((u, i) => `<figure><img src="${esc(u)}" alt=""><button type="button" data-i="${i}" aria-label="Retirer">×</button></figure>`).join('')}</div>
+      <div class="btns"><label class="btn sm ghost">Ajouter des photos<input type="file" accept="image/*" multiple></label></div>`;
+    $$('button[data-i]', box).forEach(b => b.onclick = () => { draft[f.key].splice(+b.dataset.i, 1); ctx.dirty(); draw(); });
+    $('input[type=file]', box).onchange = async e => {
+      const files = [...e.target.files]; if (!files.length) return;
+      for (const file of files) {
+        try { draft[f.key].push(await uploadFile(file, f.folder || ctx.folder)); ctx.dirty(); }
+        catch (err) { toast(`${file.name} : ${errMsg(err)}`, 'err'); }
+      }
+      draw();
+    };
+  };
+  draw(); return box;
+}
+
+function fileField(f, draft, ctx) {
+  const box = h('<div></div>');
+  const draw = () => {
+    const v = draft[f.key];
+    box.innerHTML = `${v ? `<p class="hint"><a href="${esc(v)}" target="_blank" rel="noopener">Ouvrir le fichier actuel</a></p>` : ''}
+      <div class="btns"><label class="btn sm">${v ? 'Remplacer le fichier' : 'Téléverser un fichier'}<input type="file" accept="${esc(f.accept || '')}"></label>${v && !f.req ? '<button type="button" class="btn sm ghost" data-rm>Retirer</button>' : ''}</div>
+      <details><summary>Ou coller une adresse</summary><input type="text" placeholder="https://…" value="${v ? esc(v) : ''}"></details>`;
+    $('input[type=file]', box).onchange = async e => {
+      const file = e.target.files[0]; if (!file) return;
+      try { draft[f.key] = await uploadFile(file, 'documents'); ctx.dirty(); } catch (err) { toast(errMsg(err), 'err'); }
+      draw();
+    };
+    const rm = $('[data-rm]', box); if (rm) rm.onclick = () => { draft[f.key] = null; ctx.dirty(); draw(); };
+    $('details input', box).onchange = e => { draft[f.key] = e.target.value.trim() || null; ctx.dirty(); draw(); };
+  };
+  draw(); return box;
+}
+
+function filesField(f, draft, ctx) {
+  const box = h('<div class="files"></div>');
+  draft[f.key] = Array.isArray(draft[f.key]) ? draft[f.key] : [];
+  const draw = () => {
+    box.innerHTML = draft[f.key].map((d, i) => `<div class="fr"><input type="text" data-i="${i}" value="${esc(d.title)}" placeholder="Titre du document"><button type="button" class="icon-btn" data-rm="${i}" aria-label="Retirer">×</button><small>${esc(d.url)}</small></div>`).join('')
+      + `<div class="btns"><label class="btn sm ghost">Ajouter un document<input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv"></label></div>`;
+    $$('input[data-i]', box).forEach(inp => inp.oninput = () => { draft[f.key][+inp.dataset.i].title = inp.value; ctx.dirty(); });
+    $$('[data-rm]', box).forEach(b => b.onclick = () => { draft[f.key].splice(+b.dataset.rm, 1); ctx.dirty(); draw(); });
+    $('input[type=file]', box).onchange = async e => {
+      const file = e.target.files[0]; if (!file) return;
+      try { draft[f.key].push({ title: file.name.replace(/\.[^.]+$/, ''), url: await uploadFile(file, 'documents') }); ctx.dirty(); }
+      catch (err) { toast(errMsg(err), 'err'); }
+      draw();
+    };
+  };
+  draw(); return box;
+}
+
+function relationField(f, draft) {
+  const rows = cache[f.table] || [];
+  const box = h('<div class="rel"><input type="search" placeholder="Filtrer la liste…"><div class="list2"></div></div>');
+  draft[f.key] = Array.isArray(draft[f.key]) ? draft[f.key].map(Number) : [];
+  const draw = () => {
+    const q = $('input', box).value.toLowerCase();
+    const sel = new Set(draft[f.key]);
+    const items = rows.filter(r => LABEL[f.table](r).toLowerCase().includes(q)).sort((a, b) => sel.has(b.id) - sel.has(a.id));
+    $('.list2', box).innerHTML = items.length
+      ? items.map(r => `<label><input type="checkbox" value="${r.id}" ${sel.has(r.id) ? 'checked' : ''}>${esc(LABEL[f.table](r))}</label>`).join('')
+      : '<p class="hint" style="padding:8px 0">Rien à lier pour le moment.</p>';
+  };
+  $('input', box).oninput = draw;
+  box.addEventListener('change', e => {
+    if (e.target.type !== 'checkbox') return;
+    const id = +e.target.value, s = new Set(draft[f.key]);
+    e.target.checked ? s.add(id) : s.delete(id);
+    draft[f.key] = [...s]; box._ctx && box._ctx.dirty();
+  });
+  draw(); return box;
+}
+
+function focusField(f, draft, ctx) {
+  const [kx, ky] = f.keys;
+  draft[kx] = draft[kx] ?? 50; draft[ky] = draft[ky] ?? 50;
+  const w = h(`<div class="f wide"><span class="lbl">${esc(f.label)}</span>
+    <div class="focus-wrap"><div class="focus-prev"><img alt=""></div><div class="sl">
+      <label>Horizontal<input type="range" min="0" max="100" data-k="${kx}"></label>
+      <label>Vertical<input type="range" min="0" max="100" data-k="${ky}"></label></div></div></div>`);
+  const img = $('img', w);
+  const paint = () => { img.src = draft[f.image] || ''; img.style.objectPosition = `${draft[kx]}% ${draft[ky]}%`; img.style.visibility = draft[f.image] ? 'visible' : 'hidden'; };
+  $$('input', w).forEach(i => { i.value = draft[i.dataset.k]; i.oninput = () => { draft[i.dataset.k] = +i.value; paint(); ctx.dirty(); }; });
+  ctx.listeners.push(paint); paint(); return w;
+}
+
+function makeCtx(folder, onDirty) {
+  const ctx = { folder, listeners: [], dirty: onDirty || (() => {}), emit() { ctx.listeners.forEach(fn => fn()); } };
+  return ctx;
+}
+function renderForm(fields, draft, host, ctx) {
+  host.innerHTML = '';
+  fields.forEach(f => {
+    const el = buildField(f, draft, ctx);
+    $$('.rel', el).forEach(r => r._ctx = ctx);
+    host.appendChild(el);
+  });
+}
+function payloadFrom(fields, d) {
+  const p = {};
+  fields.forEach(f => {
+    if (f.type === 'focus') { f.keys.forEach(k => p[k] = d[k] === '' || d[k] == null ? 50 : Number(d[k])); return; }
+    let v = d[f.key];
+    if (['images', 'files'].includes(f.type)) v = Array.isArray(v) ? v : [];
+    else if (f.type === 'relation') v = Array.isArray(v) ? v.map(Number) : [];
+    else if (f.type === 'ref') v = v ? Number(v) : null;
+    else if (['image', 'file', 'date'].includes(f.type)) v = v || null;
+    else v = String(v ?? '').trim();
+    p[f.key] = v;
+  });
+  return p;
+}
+function missingField(fields, p) {
+  return fields.find(f => f.req && (p[f.key] === '' || p[f.key] == null));
+}
+
+/* ---------- Session et profil ---------- */
+let me = null;
+let recovering = /type=recovery/.test(location.hash);
+
+function authMsg(text, type = 'err') {
+  const m = $('#auth-msg'); m.hidden = !text; m.className = 'msg ' + type; m.textContent = text || '';
+}
+function showPanel(p) {
+  $$('.panel-auth').forEach(f => f.hidden = f.id !== 'p-' + p);
+  $('#auth-tabs').hidden = !['login', 'signup'].includes(p);
+  $$('#auth-tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.p === p));
+  authMsg('');
+}
+function frAuthError(e) {
+  const m = (e && e.message) || '';
+  if (/invalid login/i.test(m)) return 'Adresse e-mail ou mot de passe incorrect.';
+  if (/not confirmed/i.test(m)) return 'Confirmez d’abord votre adresse e-mail grâce au lien reçu.';
+  if (/already registered/i.test(m)) return 'Un compte existe déjà avec cette adresse.';
+  if (/rate limit|too many/i.test(m)) return 'Trop de tentatives. Réessayez dans quelques minutes.';
+  return m || 'Une erreur est survenue.';
+}
+$$('#auth-tabs button').forEach(b => b.onclick = () => showPanel(b.dataset.p));
+$$('[data-go]').forEach(b => b.onclick = () => showPanel(b.dataset.go));
+
+$('#p-login').onsubmit = async e => {
+  e.preventDefault(); authMsg('');
+  const { error } = await sb.auth.signInWithPassword({ email: $('#l-email').value.trim(), password: $('#l-pass').value });
+  if (error) return authMsg(frAuthError(error));
+  enter();
+};
+$('#p-signup').onsubmit = async e => {
+  e.preventDefault(); authMsg('');
+  const { error } = await sb.auth.signUp({
+    email: $('#s-email').value.trim(), password: $('#s-pass').value,
+    options: { data: { full_name: $('#s-name').value.trim() }, emailRedirectTo: location.origin + location.pathname }
+  });
+  if (error) return authMsg(frAuthError(error));
+  await sb.auth.signOut();
+  e.target.reset(); showPanel('login');
+  authMsg('Demande envoyée. Un administrateur doit approuver votre compte. Si un e-mail de confirmation vous est envoyé, ouvrez-le d’abord.', 'ok');
+};
+$('#p-forgot').onsubmit = async e => {
+  e.preventDefault();
+  const { error } = await sb.auth.resetPasswordForEmail($('#f-email').value.trim(), { redirectTo: location.origin + location.pathname });
+  if (error) return authMsg(frAuthError(error));
+  authMsg('Si cette adresse est connue, un lien de réinitialisation vient d’être envoyé.', 'ok');
+};
+$('#p-reset').onsubmit = async e => {
+  e.preventDefault();
+  const { error } = await sb.auth.updateUser({ password: $('#r-pass').value });
+  if (error) return authMsg(frAuthError(error));
+  recovering = false; history.replaceState(null, '', location.pathname); enter();
+};
+$('#logout').onclick = async () => { await sb.auth.signOut(); location.hash = ''; location.reload(); };
+sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY') { recovering = true; $('#app').hidden = true; $('#auth').hidden = false; showPanel('reset'); } });
+
+async function enter() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('#auth').hidden = false; $('#app').hidden = true; showPanel('login'); return; }
+  const { data: prof, error } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+  if (error || !prof) {
+    await sb.auth.signOut(); showPanel('login');
+    return authMsg(error ? errMsg(error) : 'Aucun profil trouvé pour ce compte. Contactez un administrateur.');
+  }
+  if (prof.status !== 'approved') {
+    await sb.auth.signOut(); showPanel('login');
+    return authMsg(prof.status === 'rejected' ? 'Votre demande d’accès a été refusée.' : 'Votre compte est en attente d’approbation par un administrateur.', prof.status === 'rejected' ? 'err' : 'ok');
+  }
+  me = { id: prof.id, email: prof.email, name: prof.full_name || prof.email, role: prof.role };
+  $('#auth').hidden = true; $('#app').hidden = false;
+  $('#me-name').textContent = me.name;
+  $('#me-role').textContent = me.role === 'admin' ? 'Administrateur' : 'Chercheur';
+  buildNav(); route();
+}
+
+/* ---------- Navigation ---------- */
+function buildNav() {
+  $('#nav').innerHTML = NAV.filter(n => n[2].includes(me.role)).map(([k, l]) => `<button data-k="${k}">${esc(l)}${k === 'users' ? '<span class="pill" id="pend" hidden></span>' : ''}</button>`).join('');
+  $$('#nav button').forEach(b => b.onclick = () => { if (guardDirty()) location.hash = '#/' + b.dataset.k; });
+  if (me.role === 'admin') refreshPending();
+}
+async function refreshPending() {
+  const { count } = await sb.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+  const p = $('#pend'); if (p) { p.hidden = !count; p.textContent = count || ''; }
+  return count || 0;
+}
+function route() {
+  if (!me) return;
+  let k = (location.hash.match(/^#\/(\w+)/) || [])[1];
+  const allowed = NAV.filter(n => n[2].includes(me.role)).map(n => n[0]);
+  if (!allowed.includes(k)) k = me.role === 'admin' ? 'dash' : 'news';
+  $$('#nav button').forEach(b => b.removeAttribute('aria-current')); const nb = $(`#nav button[data-k="${k}"]`); if (nb) nb.setAttribute('aria-current', 'page');
+  $('#actions').innerHTML = ''; $('#subtitle').textContent = '';
+  const v = $('#view'); v.innerHTML = '<p class="hint">Chargement…</p>';
+  const fn = { dash: viewDash, home: viewHome, users: viewUsers }[k];
+  (fn ? fn() : viewList(SECTIONS[k])).catch(e => { v.innerHTML = `<div class="msg err">${esc(errMsg(e))}</div>`; });
+}
+window.addEventListener('hashchange', route);
+
+/* ---------- Liste générique ---------- */
+let cur = null, rows = [], ui = { q: '', f: 'all' };
+
+async function viewList(sec) {
+  cur = sec; ui = { q: '', f: 'all' };
+  $('#title').textContent = sec.label;
+  const { data, error } = await sb.from(sec.table).select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: true });
+  if (error) throw error;
+  rows = data;
+  const canAdd = true;
+  $('#actions').innerHTML = (sec.bulk ? '<label class="btn ghost" style="margin-right:8px">Ajouter plusieurs photos<input type="file" id="bulk" accept="image/*" multiple hidden></label>' : '')
+    + (canAdd ? `<button class="btn" id="add">Ajouter ${esc(sec.noun)}</button>` : '');
+  $('#add').onclick = () => openEditor(sec, null);
+  if (sec.bulk) $('#bulk').onchange = e => bulkUpload(sec, [...e.target.files]);
+  drawList();
+}
+
+function drawList() {
+  const sec = cur, v = $('#view');
+  const filtering = ui.q || ui.f !== 'all';
+  const shown = rows.filter(r => {
+    if (ui.f !== 'all' && r[sec.filter.key] !== ui.f) return false;
+    const t = (sec.title(r) + ' ' + sec.sub(r)).toLowerCase();
+    return !ui.q || t.includes(ui.q.toLowerCase());
+  });
+  const canDel = me.role === 'admin', canSort = me.role === 'admin' && !filtering;
+  v.innerHTML = `<div class="bar"><input type="search" id="q" placeholder="Rechercher…" value="${esc(ui.q)}" aria-label="Rechercher">
+    ${sec.filter ? `<div class="chips">${[['all', 'Tout'], ...sec.filter.options].map(([val, l]) => `<button class="chip" data-f="${esc(val)}" aria-pressed="${ui.f === val}">${esc(l)}</button>`).join('')}</div>` : ''}</div>
+    ${shown.length ? `<ul class="list">${shown.map(r => {
+      const i = rows.indexOf(r), t = sec.thumb(r);
+      return `<li class="row" data-id="${r.id}"><div class="th">${t ? `<img src="${esc(t)}" alt="" loading="lazy">` : esc((sec.title(r) || '?').trim().charAt(0).toUpperCase())}</div>
+        <div class="tx" data-edit><b>${esc(sec.title(r))}</b><span>${esc(sec.sub(r))}</span></div>
+        <div class="ac">${canSort ? `<button class="icon-btn" data-up ${i === 0 ? 'disabled' : ''} aria-label="Monter">↑</button><button class="icon-btn" data-down ${i === rows.length - 1 ? 'disabled' : ''} aria-label="Descendre">↓</button>` : ''}
+        <button class="btn sm ghost" data-edit>Modifier</button>${canDel ? '<button class="btn sm ghost" data-del style="color:var(--red)">Supprimer</button>' : ''}</div></li>`;
+    }).join('')}</ul>` : `<div class="empty">${rows.length ? 'Aucun résultat pour cette recherche.' : `Rien ici pour le moment. Utilisez « Ajouter ${esc(sec.noun)} » pour commencer.`}</div>`}`;
+  const q = $('#q'); q.oninput = () => { ui.q = q.value; const pos = q.selectionStart; drawList(); const nq = $('#q'); nq.focus(); nq.setSelectionRange(pos, pos); };
+  $$('.chip', v).forEach(c => c.onclick = () => { ui.f = c.dataset.f; drawList(); });
+  $$('.row', v).forEach(li => {
+    const r = rows.find(x => String(x.id) === li.dataset.id);
+    $$('[data-edit]', li).forEach(b => b.onclick = () => openEditor(sec, r));
+    const up = $('[data-up]', li), dn = $('[data-down]', li), del = $('[data-del]', li);
+    if (up) up.onclick = () => move(r, -1);
+    if (dn) dn.onclick = () => move(r, 1);
+    if (del) del.onclick = () => removeRow(sec, r);
+  });
+}
+
+async function move(r, dir) {
+  const arr = [...rows], i = arr.indexOf(r), j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  const jobs = arr.map((x, n) => x.sort_order !== n ? sb.from(cur.table).update({ sort_order: n }).eq('id', x.id).then(res => ({ res, x, n })) : null).filter(Boolean);
+  const out = await Promise.all(jobs);
+  const bad = out.find(o => o.res.error);
+  if (bad) return toast(errMsg(bad.res.error), 'err');
+  out.forEach(o => o.x.sort_order = o.n);
+  rows = arr; drawList();
+}
+async function removeRow(sec, r) {
+  if (!await ask('Supprimer définitivement ?', `« ${sec.title(r)} » sera retiré du site. Cette action est irréversible.`, 'Supprimer', true)) return;
+  const { error, count } = await sb.from(sec.table).delete({ count: 'exact' }).eq('id', r.id);
+  if (error) return toast(errMsg(error), 'err');
+  if (!count) return toast('Suppression refusée par la base de données.', 'err');
+  delete cache[sec.table]; rows = rows.filter(x => x !== r); drawList(); toast('Supprimé.');
+}
+async function bulkUpload(sec, files) {
+  if (!files.length) return;
+  toast(`Envoi de ${files.length} photo(s)…`);
+  let n = 0, max = Math.max(-1, ...rows.map(r => r.sort_order ?? 0));
+  for (const file of files) {
+    try {
+      const url = await uploadFile(file, 'gallery');
+      const p = { img: url, sort_order: ++max, caption: '' };
+      if (ui.f !== 'all') p.category = ui.f;
+      const { error } = await sb.from('gallery').insert(p);
+      if (error) throw error; n++;
+    } catch (e) { toast(`${file.name} : ${errMsg(e)}`, 'err'); }
+  }
+  toast(`${n} photo(s) ajoutée(s). Pensez à ajouter les légendes.`); viewList(sec);
+}
+
+/* ---------- Tiroir d'édition ---------- */
+let drDirty = false;
+const guardDirty = () => !drDirty || confirm('Des modifications n’ont pas été enregistrées. Les abandonner ?');
+
+async function openEditor(sec, item) {
+  const isNew = !item;
+  const need = [...new Set(sec.fields.filter(f => f.table).map(f => f.table).concat(sec.fields.filter(f => f.source).map(f => f.source)))];
+  try { await Promise.all(need.map(listOf)); } catch (e) { return toast(errMsg(e), 'err'); }
+  const draft = isNew ? JSON.parse(JSON.stringify(sec.blank)) : JSON.parse(JSON.stringify(item));
+  drDirty = false;
+  const ctx = makeCtx(sec.key, () => drDirty = true);
+  const dr = $('#drawer');
+  dr.innerHTML = `<header><h2 id="dr-title">${isNew ? 'Ajouter' : 'Modifier'} ${esc(sec.noun)}</h2><button class="icon-btn" id="dr-x" aria-label="Fermer">×</button></header>
+    <div class="dr-body"><form id="dr-form" class="grid" novalidate></form></div>
+    <footer><button class="btn ghost" id="dr-cancel">Annuler</button><button class="btn" id="dr-save">Enregistrer</button></footer>`;
+  renderForm(sec.fields, draft, $('#dr-form'), ctx);
+  if (!isNew && sec.track && item.updated_by) $('#dr-form').insertAdjacentHTML('beforeend', `<p class="hint wide">Dernière modification par ${esc(item.updated_by)}.</p>`);
+  const close = () => { if (!guardDirty()) return; $('#ov').hidden = true; document.body.style.overflow = ''; drDirty = false; };
+  $('#dr-x').onclick = $('#dr-cancel').onclick = close;
+  $('#ov').onmousedown = e => { if (e.target.id === 'ov') close(); };
+  $('#ov').onkeydown = e => { if (e.key === 'Escape') close(); };
+  $('#ov').hidden = false; document.body.style.overflow = 'hidden';
+  const first = $('#dr-form input[type=text],#dr-form textarea'); if (first) first.focus();
+
+  $('#dr-save').onclick = async () => {
+    const p = payloadFrom(sec.fields, draft);
+    const miss = missingField(sec.fields, p);
+    if (miss) return toast(`Le champ « ${miss.label} » est obligatoire.`, 'err');
+    if (sec.beforeSave) sec.beforeSave(p, draft, isNew);
+    if (sec.track) { if (isNew) p.created_by = me.email; p.updated_by = me.email; }
+    if (isNew) {
+      const so = rows.map(r => r.sort_order ?? 0);
+      p.sort_order = sec.newFirst ? Math.min(0, ...so) - 1 : Math.max(-1, ...so) + 1;
+    }
+    const btn = $('#dr-save'); btn.disabled = true; btn.textContent = 'Enregistrement…';
+    const q = isNew ? sb.from(sec.table).insert(p).select().single() : sb.from(sec.table).update(p).eq('id', item.id).select().single();
+    const { data, error } = await q;
+    btn.disabled = false; btn.textContent = 'Enregistrer';
+    if (error) return toast(errMsg(error), 'err');
+    delete cache[sec.table];
+    drDirty = false; $('#ov').hidden = true; document.body.style.overflow = '';
+    toast(isNew ? 'Ajouté et publié sur le site.' : 'Modifications enregistrées.');
+    viewList(sec);
+  };
+}
+
+/* ---------- Tableau de bord ---------- */
+async function viewDash() {
+  $('#title').textContent = 'Tableau de bord';
+  $('#subtitle').textContent = 'Vue d’ensemble du contenu publié sur le site.';
+  const keys = ['news', 'publications', 'team', 'projects', 'partners', 'gallery', 'documents', 'domains'];
+  const counts = await Promise.all(keys.map(k => sb.from(SECTIONS[k].table).select('id', { count: 'exact', head: true }).then(r => r.count ?? 0)));
+  const pending = await refreshPending();
+  $('#view').innerHTML = `${pending ? `<div class="msg ok" style="background:var(--amberbg);color:var(--amber)">${pending} demande(s) d’accès en attente. <button class="linklike" id="to-users" style="color:inherit;text-decoration:underline">Examiner</button></div>` : ''}
+    <div class="cards">${keys.map((k, i) => `<button class="card" data-k="${k}"><b>${counts[i]}</b><span>${esc(SECTIONS[k].label)}</span></button>`).join('')}</div>
+    <div class="panel"><h2>Optimiser les anciennes images</h2>
+      <p>Les images ajoutées avant cette version sont enregistrées dans la base de données, ce qui ralentit le site. Cet outil les déplace dans l’espace de stockage et les compresse.</p>
+      <button class="btn" id="migrate">Lancer l’optimisation</button><div class="log" id="mlog" hidden></div></div>`;
+  $$('.card').forEach(c => c.onclick = () => location.hash = '#/' + c.dataset.k);
+  const tu = $('#to-users'); if (tu) tu.onclick = () => location.hash = '#/users';
+  $('#migrate').onclick = migrateImages;
+}
+
+async function migrateImages() {
+  if (!await ask('Optimiser les images ?', 'Les images intégrées à la base seront déplacées vers le stockage. Cela peut prendre quelques minutes.', 'Lancer')) return;
+  const btn = $('#migrate'), log = $('#mlog'); btn.disabled = true; log.hidden = false; log.textContent = '';
+  const say = t => { log.textContent += t + '\n'; log.scrollTop = log.scrollHeight; };
+  const targets = [['news', 'img'], ['projects', 'img'], ['domains', 'img'], ['gallery', 'img'], ['team', 'photo'], ['partners', 'logo'], ['site_content', 'hero_img'], ['site_content', 'about_img']];
+  let done = 0, failed = 0;
+  for (const [table, col] of targets) {
+    const { data, error } = await sb.from(table).select(`id,${col}`).like(col, 'data:%');
+    if (error) { say(`${table}.${col} : ${errMsg(error)}`); continue; }
+    for (const r of data) {
+      try {
+        const blob = await (await fetch(r[col])).blob();
+        const url = await uploadFile(new File([blob], 'image.' + (blob.type.split('/')[1] || 'png'), { type: blob.type }), table, { alpha: col === 'logo' });
+        const { error: ue } = await sb.from(table).update({ [col]: url }).eq('id', r.id);
+        if (ue) throw ue;
+        done++; say(`OK  ${table} #${r.id}`);
+      } catch (e) { failed++; say(`ÉCHEC  ${table} #${r.id} : ${errMsg(e)}`); }
+    }
+  }
+  say(`Terminé : ${done} image(s) déplacée(s), ${failed} échec(s).`); btn.disabled = false;
+}
+
+/* ---------- Accueil et chiffres clés ---------- */
+async function viewHome() {
+  $('#title').textContent = 'Accueil et chiffres';
+  $('#subtitle').textContent = 'Textes de la page d’accueil et chiffres clés affichés sur le site.';
+  const { data, error } = await sb.from('site_content').select('*').eq('id', 1).maybeSingle();
+  if (error) throw error;
+  const draft = { ...(data || {}) };
+  const empty = !draft.hero_title && !draft.about_title;
+  $('#view').innerHTML = `<div class="panel"><h2>Contenu de la page d’accueil</h2>
+    <p>${empty ? 'Ces textes n’ont jamais été personnalisés : le site affiche ses textes d’origine. Remplissez tous les champs pour les remplacer.' : 'Les modifications apparaissent immédiatement sur le site.'}</p>
+    <form id="home-form" class="grid" novalidate></form><button class="btn" id="home-save">Enregistrer le contenu</button></div>
+    <div class="panel"><h2>Chiffres clés</h2><p>Chaque chiffre peut être saisi à la main ou compté automatiquement à partir des contenus du site.</p><div id="stats"></div></div>`;
+  renderForm(HOME_FIELDS, draft, $('#home-form'), makeCtx('home'));
+  $('#home-save').onclick = async () => {
+    const p = payloadFrom(HOME_FIELDS, draft), miss = missingField(HOME_FIELDS, p);
+    if (miss) return toast(`Le champ « ${miss.label} » est obligatoire.`, 'err');
+    let { data: upd, error: e1 } = await sb.from('site_content').update(p).eq('id', 1).select();
+    if (!e1 && (!upd || !upd.length)) ({ error: e1 } = await sb.from('site_content').insert({ id: 1, ...p }));
+    if (e1) return toast(errMsg(e1), 'err');
+    toast('Contenu enregistré.');
+  };
+  await statsEditor($('#stats'));
+}
+
+async function statsEditor(host) {
+  const { data, error } = await sb.from('site_stats').select('*').order('sort_order').order('id');
+  if (error) { host.innerHTML = `<div class="msg err">${esc(errMsg(error))}</div>`; return; }
+  let list = data.map(r => ({ ...r })); const removed = [];
+  const SRC = [['publications', 'Publications'], ['team', 'Chercheurs'], ['partners', 'Partenaires'], ['projects', 'Projets'], ['gallery', 'Photos de la galerie'], ['documents', 'Documents']];
+  const ICONS = [['flask', 'Flacon'], ['users', 'Personnes'], ['book', 'Livre'], ['globe', 'Globe']];
+  const opt = (arr, v) => arr.map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${esc(l)}</option>`).join('');
+  const draw = () => {
+    host.innerHTML = list.map((r, i) => `<div class="stat" data-i="${i}">
+      <div class="f"><label>Origine</label><select data-k="mode"><option value="manual" ${r.mode === 'manual' ? 'selected' : ''}>Saisi à la main</option><option value="auto" ${r.mode === 'auto' ? 'selected' : ''}>Compté automatiquement</option></select></div>
+      <div class="f"><label>${r.mode === 'auto' ? 'Compter' : 'Valeur'}</label>${r.mode === 'auto' ? `<select data-k="source">${opt(SRC, r.source || 'publications')}</select>` : `<input type="text" data-k="value" value="${esc(r.value)}">`}</div>
+      <div class="f"><label>Préfixe</label><input type="text" data-k="prefix" value="${esc(r.prefix)}"></div>
+      <div class="f wide2"><label>Libellé (français)</label><input type="text" data-k="label_fr" value="${esc(r.label_fr)}"></div>
+      <div class="f wide2"><label>Libellé (anglais)</label><input type="text" data-k="label_en" value="${esc(r.label_en)}"></div>
+      <div class="f"><label>Icône</label><select data-k="icon">${opt(ICONS, r.icon)}</select></div>
+      <div class="ac"><button class="icon-btn" data-up ${i === 0 ? 'disabled' : ''} aria-label="Monter">↑</button><button class="icon-btn" data-down ${i === list.length - 1 ? 'disabled' : ''} aria-label="Descendre">↓</button><button class="icon-btn" data-rm aria-label="Supprimer" style="color:var(--red)">×</button></div></div>`).join('')
+      + `<div class="btns"><button class="btn sm ghost" id="st-add">Ajouter un chiffre</button><button class="btn" id="st-save">Enregistrer les chiffres</button></div>`;
+  };
+  host.oninput = host.onchange = e => {
+    const t = e.target, row = t.closest('.stat'); if (!row || !t.dataset.k) return;
+    list[+row.dataset.i][t.dataset.k] = t.value;
+    if (t.dataset.k === 'mode' && e.type === 'change') draw();
+  };
+  host.onclick = async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const row = b.closest('.stat'), i = row ? +row.dataset.i : -1;
+    if (b.id === 'st-add') { list.push({ mode: 'manual', prefix: '+ ', value: '', label_fr: '', label_en: '', icon: 'flask', source: null }); draw(); }
+    else if (b.hasAttribute('data-rm')) { if (list[i].id) removed.push(list[i].id); list.splice(i, 1); draw(); }
+    else if (b.hasAttribute('data-up') && i > 0) { [list[i - 1], list[i]] = [list[i], list[i - 1]]; draw(); }
+    else if (b.hasAttribute('data-down') && i < list.length - 1) { [list[i + 1], list[i]] = [list[i], list[i + 1]]; draw(); }
+    else if (b.id === 'st-save') {
+      if (list.some(r => !String(r.label_fr || '').trim())) return toast('Chaque chiffre doit avoir un libellé en français.', 'err');
+      b.disabled = true;
+      try {
+        for (const id of removed.splice(0)) { const { error } = await sb.from('site_stats').delete().eq('id', id); if (error) throw error; }
+        for (let n = 0; n < list.length; n++) {
+          const r = list[n], auto = r.mode === 'auto';
+          const p = { sort_order: n, mode: r.mode, source: auto ? (r.source || 'publications') : null, prefix: r.prefix ?? '', value: auto ? null : String(r.value ?? ''), label_fr: r.label_fr.trim(), label_en: (r.label_en || '').trim() || null, icon: r.icon || 'flask' };
+          if (r.id) { const { error } = await sb.from('site_stats').update(p).eq('id', r.id); if (error) throw error; }
+          else { const { data: d, error } = await sb.from('site_stats').insert(p).select().single(); if (error) throw error; r.id = d.id; }
+        }
+        toast('Chiffres clés enregistrés.');
+      } catch (err) { toast(errMsg(err), 'err'); }
+      b.disabled = false;
+    }
+  };
+  draw();
+}
+
+/* ---------- Utilisateurs ---------- */
+async function viewUsers() {
+  $('#title').textContent = 'Utilisateurs';
+  $('#subtitle').textContent = 'Approuvez les demandes d’accès et choisissez le rôle de chacun.';
+  const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  const order = { pending: 0, approved: 1, rejected: 2 };
+  const list = [...data].sort((a, b) => order[a.status] - order[b.status]);
+  const BL = { pending: 'En attente', approved: 'Approuvé', rejected: 'Refusé' };
+  $('#view').innerHTML = `<div class="msg ok">Chercheur : peut ajouter et modifier des actualités. Administrateur : accès complet.</div>
+    <ul class="list">${list.map(u => `<li class="row" data-id="${u.id}" style="grid-template-columns:1fr auto">
+      <div class="tx" style="cursor:default"><b>${esc(u.full_name || u.email)} <span class="badge b-${u.status}">${BL[u.status] || esc(u.status)}</span></b><span>${esc(u.email)}${u.created_at ? ', inscrit le ' + esc(fmtFr(u.created_at.slice(0, 10))) : ''}</span></div>
+      <div class="ac">${u.id === me.id ? '<span class="hint">C’est vous</span>' : `
+        <select data-role aria-label="Rôle" style="border:1.5px solid var(--line);border-radius:8px;padding:5px 8px"><option value="chercheur" ${u.role === 'chercheur' ? 'selected' : ''}>Chercheur</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrateur</option></select>
+        ${u.status !== 'approved' ? '<button class="btn sm" data-st="approved">Approuver</button>' : ''}
+        ${u.status !== 'rejected' ? '<button class="btn sm ghost" data-st="rejected" style="color:var(--red)">Refuser</button>' : ''}`}</div></li>`).join('')}</ul>`;
+  $$('.row').forEach(li => {
+    const id = li.dataset.id;
+    $$('[data-st]', li).forEach(b => b.onclick = async () => {
+      const { error: e } = await sb.from('profiles').update({ status: b.dataset.st }).eq('id', id);
+      if (e) return toast(errMsg(e), 'err'); toast('Statut mis à jour.'); viewUsers(); refreshPending();
+    });
+    const sel = $('[data-role]', li);
+    if (sel) sel.onchange = async () => {
+      if (sel.value === 'admin' && !await ask('Donner un accès complet ?', 'Cette personne pourra tout modifier et supprimer sur le site.', 'Confirmer')) return viewUsers();
+      const { error: e } = await sb.from('profiles').update({ role: sel.value }).eq('id', id);
+      if (e) return toast(errMsg(e), 'err'); toast('Rôle mis à jour.');
+    };
+  });
+}
+
+/* ---------- Démarrage ---------- */
+if (recovering) { $('#auth').hidden = false; showPanel('reset'); } else enter();
+})();
+</script>
+</body>
+</html>
