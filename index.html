@@ -200,9 +200,21 @@
   /* ---------- Panneau d'administration : page entière dédiée ---------- */
   .admin-page-overlay{
     display:none; position:fixed; inset:0; z-index:200;
-    background:var(--white); overflow-y:auto;
+    background:var(--white); overflow:hidden;
   }
-  .admin-page-overlay.open{display:block;}
+  .admin-page-overlay.open{display:flex; flex-direction:column; height:100vh; height:100dvh;}
+  .admin-page-overlay .admin-page-banner{flex:0 0 auto;}
+  .admin-scroll{
+    flex:1 1 auto; min-height:0; overflow-y:scroll; overflow-x:hidden;
+    overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+    scrollbar-width:auto; scrollbar-color:var(--green-500) var(--green-50);
+  }
+  .admin-scroll::-webkit-scrollbar{width:12px;}
+  .admin-scroll::-webkit-scrollbar-track{background:var(--green-50);}
+  .admin-scroll::-webkit-scrollbar-thumb{background:var(--green-500);border-radius:8px;border:2px solid var(--green-50);}
+  .admin-scroll::-webkit-scrollbar-thumb:hover{background:var(--green-600);}
+  body.admin-open{overflow:hidden;}
+  .admin-panel-actions{position:sticky;bottom:0;background:#fff;z-index:6;}
   .admin-panel{
     max-width:1100px; margin:0 auto; padding:40px 32px 80px; position:relative;
   }
@@ -642,6 +654,7 @@
     </div>
     <button type="button" class="btn btn-outline" id="admin-panel-close" style="margin-left:auto;background:transparent;border-color:rgba(255,255,255,.4);color:#fff;padding:9px 16px;font-size:13px;">&larr; Retour au site</button>
   </div>
+  <div class="admin-scroll">
   <div class="admin-panel" role="dialog" aria-modal="true">
     <div class="admin-panel-head">
       <div>
@@ -744,6 +757,7 @@
       <button type="button" class="btn btn-primary" id="admin-save-btn">Enregistrer les modifications</button>
     </div>
     <p id="admin-save-confirm" style="display:none;color:var(--green-600);font-size:13px;font-weight:600;text-align:right;margin-top:10px;">✓ Modifications enregistrées.</p>
+  </div>
   </div>
 </div>
 
@@ -1498,13 +1512,17 @@
         { key: 'name', label: 'Nom', type: 'text' },
         { key: 'role', label: 'Fonction', type: 'text' },
         { key: 'bio', label: 'Courte biographie', type: 'textarea' },
+        { key: 'speciality', label: 'Spécialité / domaine de recherche', type: 'text' },
+        { key: 'email', label: 'E-mail professionnel (affiché sur la fiche)', type: 'text' },
+        { key: 'orcid', label: 'Identifiant ORCID (ex. 0000-0002-1825-0097)', type: 'text' },
+        { key: 'scholar', label: 'Lien Google Scholar', type: 'text' },
         { key: 'photo', label: 'Photo', type: 'photo' },
         { key: 'photo_x', label: 'Position horizontale de la photo', type: 'slider' },
         { key: 'photo_y', label: 'Position verticale de la photo', type: 'slider' }
       ],
-      mapFromRow: (row) => ({ id: row.id, name: row.name, role: row.role, bio: row.bio, photo: row.photo, photo_x: row.photo_x, photo_y: row.photo_y }),
-      mapToPayload: (item) => ({ name: item.name || '', role: item.role || '', bio: item.bio || '', photo: item.photo || null, photo_x: item.photo_x === undefined || item.photo_x === '' ? 50 : item.photo_x, photo_y: item.photo_y === undefined || item.photo_y === '' ? 50 : item.photo_y }),
-      blankItem: { name:'', role:'', bio:'', photo:'', photo_x:50, photo_y:50 }
+      mapFromRow: (row) => ({ id: row.id, name: row.name, role: row.role, bio: row.bio, photo: row.photo, photo_x: row.photo_x, photo_y: row.photo_y, speciality: row.speciality, email: row.email, orcid: row.orcid, scholar: row.scholar }),
+      mapToPayload: (item) => ({ name: item.name || '', role: item.role || '', bio: item.bio || '', photo: item.photo || null, photo_x: item.photo_x === undefined || item.photo_x === '' ? 50 : item.photo_x, photo_y: item.photo_y === undefined || item.photo_y === '' ? 50 : item.photo_y, speciality: item.speciality || null, email: item.email || null, orcid: item.orcid || null, scholar: item.scholar || null }),
+      blankItem: { name:'', role:'', bio:'', photo:'', photo_x:50, photo_y:50, speciality:'', email:'', orcid:'', scholar:'' }
     });
 
     const partnersSection = makeSimpleSection({
@@ -1526,11 +1544,15 @@
         { key: 'authors', label: 'Auteurs', type: 'text' },
         { key: 'source', label: 'Source / Revue', type: 'text' },
         { key: 'year', label: 'Année', type: 'text' },
+        { key: 'domain', label: 'Domaine (ex. Paludisme, Résistance aux insecticides)', type: 'text' },
+        { key: 'doi', label: 'DOI (optionnel)', type: 'text' },
+        { key: 'online_url', label: 'Lien en ligne (optionnel)', type: 'text' },
+        { key: 'abstract', label: 'Résumé (optionnel)', type: 'textarea' },
         { key: 'file_url', label: 'Lien vers le PDF (optionnel)', type: 'text' }
       ],
-      mapFromRow: (row) => ({ id: row.id, title: row.title, authors: row.authors, source: row.source, year: row.year, file_url: row.file_url }),
-      mapToPayload: (item) => ({ title: item.title || '', authors: item.authors || null, source: item.source || null, year: item.year || null, file_url: item.file_url || null }),
-      blankItem: { title:'', authors:'', source:'', year:'', file_url:'' }
+      mapFromRow: (row) => ({ id: row.id, title: row.title, authors: row.authors, source: row.source, year: row.year, file_url: row.file_url, domain: row.domain, doi: row.doi, online_url: row.online_url, abstract: row.abstract }),
+      mapToPayload: (item) => ({ title: item.title || '', authors: item.authors || null, source: item.source || null, year: item.year || null, file_url: item.file_url || null, domain: item.domain || null, doi: item.doi || null, online_url: item.online_url || null, abstract: item.abstract || null }),
+      blankItem: { title:'', authors:'', source:'', year:'', file_url:'', domain:'', doi:'', online_url:'', abstract:'' }
     });
 
     const documentsSection = makeSimpleSection({
@@ -1579,12 +1601,12 @@
       grid.innerHTML = members.map((m) => {
         const px = (m.photo_x === undefined || m.photo_x === null) ? 50 : m.photo_x;
         const py = (m.photo_y === undefined || m.photo_y === null) ? 50 : m.photo_y;
-        return '<div class="team-card">' +
+        return '<a class="team-card" href="chercheur.html?id=' + encodeURIComponent(m.id) + '" style="display:block;color:inherit;">' +
           '<img src="' + (m.photo || fallbackImg) + '" alt="' + escapeHtml(m.name || '') + '" style="object-position:' + px + '% ' + py + '%;">' +
           '<h4>' + escapeHtml(m.name || '') + '</h4>' +
           '<p>' + escapeHtml(m.role || '') + '</p>' +
           (m.bio ? '<p class="bio">' + escapeHtml(m.bio) + '</p>' : '') +
-        '</div>';
+        '</a>';
       }).join('');
     }
 
@@ -1731,9 +1753,17 @@
       renderAdminProjectsList();
       adminSaveConfirm.style.display = 'none';
       adminPanelOverlay.classList.add('open');
+      document.body.classList.add('admin-open');
     }
     function openAdminLogin(e){
       if (e) e.preventDefault();
+      sb.auth.getSession().then(({ data }) => {
+        const u = data && data.session && data.session.user;
+        const r = u && u.user_metadata && u.user_metadata.role;
+        if (r === 'admin' || r === 'chercheur') enterAdmin(r); else showAdminLogin();
+      });
+    }
+    function showAdminLogin(){
       adminLoginError.style.display = 'none';
       adminLoginForm.reset();
       document.getElementById('admin-user').value = '';
@@ -1779,6 +1809,28 @@
       if (adminResetBtn) adminResetBtn.style.display = isAdmin ? '' : 'none';
     }
 
+    async function enterAdmin(role){
+        currentRole = role;
+        adminLoginOverlay.classList.remove('open');
+        renderAdminList();
+        if (role === 'admin') {
+          renderAdminProjectsList();
+          await Promise.all([teamSection.load(), partnersSection.load(), publicationsSection.load(), documentsSection.load(), domainsSection.load(), gallerySection.load()]);
+          teamSection.renderAdmin();
+          partnersSection.renderAdmin();
+          publicationsSection.renderAdmin();
+          documentsSection.renderAdmin();
+          domainsSection.renderAdmin();
+          gallerySection.renderAdmin();
+          fillContentForm();
+        }
+        adminSaveConfirm.style.display = 'none';
+        adminPanelOverlay.classList.add('open');
+      document.body.classList.add('admin-open');
+        applyRolePermissions();
+
+    }
+
     const adminLoginSubmitBtn = adminLoginForm.querySelector('button[type="submit"]');
 
     adminLoginForm.addEventListener('submit', async (e) => {
@@ -1797,23 +1849,7 @@
       const role = !error && data.user ? (data.user.user_metadata && data.user.user_metadata.role) : null;
 
       if (!error && (role === 'admin' || role === 'chercheur')) {
-        currentRole = role;
-        adminLoginOverlay.classList.remove('open');
-        renderAdminList();
-        if (role === 'admin') {
-          renderAdminProjectsList();
-          await Promise.all([teamSection.load(), partnersSection.load(), publicationsSection.load(), documentsSection.load(), domainsSection.load(), gallerySection.load()]);
-          teamSection.renderAdmin();
-          partnersSection.renderAdmin();
-          publicationsSection.renderAdmin();
-          documentsSection.renderAdmin();
-          domainsSection.renderAdmin();
-          gallerySection.renderAdmin();
-          fillContentForm();
-        }
-        adminSaveConfirm.style.display = 'none';
-        adminPanelOverlay.classList.add('open');
-        applyRolePermissions();
+        await enterAdmin(role);
       } else {
         currentRole = null;
         await sb.auth.signOut();
@@ -1826,9 +1862,8 @@
       }
     });
 
-    function closeAdminPanel(){ adminPanelOverlay.classList.remove('open'); }
+    function closeAdminPanel(){ adminPanelOverlay.classList.remove('open'); document.body.classList.remove('admin-open'); }
     adminPanelClose.addEventListener('click', closeAdminPanel);
-    adminPanelOverlay.addEventListener('click', (e) => { if (e.target === adminPanelOverlay) closeAdminPanel(); });
     adminLogoutBtn.addEventListener('click', async () => {
       currentRole = null;
       await sb.auth.signOut();

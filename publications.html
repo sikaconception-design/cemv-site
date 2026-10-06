@@ -118,6 +118,39 @@
     .footer-grid{grid-template-columns:1fr;gap:32px;}
     .page-hero h1{font-size:26px;}
   }
+
+  /* ---- Bibliothèque scientifique & fiches chercheurs ---- */
+  .lib-bar{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin-bottom:14px;}
+  .lib-bar input,.lib-bar select{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:#fff;color:var(--ink);outline:none;}
+  .lib-bar input:focus,.lib-bar select:focus{border-color:var(--green-500);}
+  .lib-reset{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:0 16px;font-weight:600;font-size:13px;color:var(--green-700);cursor:pointer;}
+  .lib-reset:hover{background:var(--green-50);}
+  .lib-count{font-size:13px;color:var(--ink-soft);margin:6px 0 10px;}
+  .lib-state{padding:28px 0;color:var(--ink-soft);font-size:14.5px;}
+  .pub-item{display:flex;justify-content:space-between;gap:20px;padding:20px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .pub-main{flex:1 1 420px;min-width:0;}
+  .pub-main h4{font-size:15.5px;line-height:1.4;margin:6px 0 6px;}
+  .pub-authors{font-size:13px;color:var(--ink);} .pub-meta{font-size:12.5px;color:var(--ink-soft);margin-top:3px;}
+  .pub-tag{display:inline-block;background:var(--green-100);color:var(--green-700);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+  .pub-abs{margin-top:8px;font-size:13px;color:var(--ink-soft);} .pub-abs summary{cursor:pointer;color:var(--green-700);font-weight:600;}
+  .pub-abs p{margin-top:6px;line-height:1.6;}
+  .pub-links{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end;}
+  .pub-link{border:1.5px solid var(--green-600);color:var(--green-700);padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap;}
+  .pub-link:hover{background:var(--green-50);} .pub-link.primary{background:var(--green-600);color:#fff;} .pub-link.primary:hover{background:var(--green-700);}
+  .pub-none{font-size:12px;color:var(--ink-soft);}
+  .team-public-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;}
+  .team-card-link{display:block;text-align:center;color:inherit;}
+  .team-card-link img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:50%;margin-bottom:14px;box-shadow:var(--shadow);transition:transform .2s;}
+  .team-card-link:hover img{transform:translateY(-3px);}
+  .team-card-link h4{font-size:15px;margin-bottom:4px;} .team-card-link .role{font-size:12.5px;color:var(--green-600);font-weight:600;}
+  .team-card-link .spec{font-size:12.5px;color:var(--ink-soft);margin-top:3px;} .team-card-link .see{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:700;color:var(--green-700);}
+  .back-link{display:inline-block;font-size:13.5px;font-weight:600;color:var(--green-700);margin-bottom:22px;}
+  .profile-head{display:flex;gap:30px;align-items:center;flex-wrap:wrap;}
+  .profile-head img{width:170px;height:170px;border-radius:50%;object-fit:cover;box-shadow:var(--shadow);flex-shrink:0;}
+  .profile-head h1{font-size:30px;} .profile-head .role{color:var(--green-600);font-weight:700;margin-top:6px;} .profile-head .spec{color:var(--ink-soft);font-size:14px;margin-top:4px;}
+  .profile-h{font-size:20px;margin:34px 0 10px;} .profile-bio{color:var(--ink-soft);font-size:15px;line-height:1.7;max-width:760px;white-space:pre-line;}
+  @media (max-width:900px){.lib-bar{grid-template-columns:1fr 1fr;}.lib-bar input{grid-column:1/3;}.team-public-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:560px){.team-public-grid{grid-template-columns:1fr;}.pub-links{justify-content:flex-start;}}
 </style>
 </head>
 <body>
@@ -148,18 +181,14 @@
 <section class="page-hero">
   <div class="wrap">
     <span class="eyebrow">PUBLICATIONS</span>
-    <h1>Nos travaux scientifiques</h1>
-    <p>Une s&eacute;lection des publications, rapports et actes de conf&eacute;rence produits par les chercheurs du CEMV.</p>
+    <h1>Bibliothèque scientifique</h1>
+    <p>Recherchez les publications, rapports et actes de conf&eacute;rence du CEMV par mot-cl&eacute;, ann&eacute;e ou domaine.</p>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <div class="section-head">
-      <div><span class="eyebrow">PUBLICATIONS</span><h3>Travaux scientifiques du CEMV</h3></div>
-    </div>
-    <ul class="list-simple"><li><div><h4>Identification de nouveaux g&egrave;nes de r&eacute;sistance aux insecticides chez Aedes aegypti</h4><p>Revue d'Entomologie M&eacute;dicale, 2025</p></div><span class="meta">PDF &agrave; venir</span></li><li><div><h4>Surveillance des populations d'Anoph&egrave;les dans le Gb&ecirc;k&eacute;</h4><p>Actes du Forum Afrique de l'Ouest, 2025</p></div><span class="meta">PDF &agrave; venir</span></li><li><div><h4>Zoonoses vectorielles en &eacute;levage bovin : &eacute;tat des lieux</h4><p>Bulletin de Sant&eacute; Animale, 2024</p></div><span class="meta">PDF &agrave; venir</span></li><li><div><h4>Cartographie des zones &agrave; risque de maladies vectorielles en C&ocirc;te d'Ivoire</h4><p>Rapport CEMV, 2024</p></div><span class="meta">PDF &agrave; venir</span></li></ul>
-    <p style="margin-top:24px;color:var(--ink-soft);font-size:13.5px;">Cette liste est indicative &mdash; les liens de t&eacute;l&eacute;chargement seront ajout&eacute;s au fur et &agrave; mesure de la mise en ligne des publications compl&egrave;tes.</p>
+    <div id="lib"></div>
   </div>
 </section>
 
@@ -211,5 +240,8 @@
     </div>
   </div>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="cemv-public.js"></script>
+<script>CEMV_initLibrary();</script>
 </body>
 </html>
