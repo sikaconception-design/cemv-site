@@ -118,6 +118,28 @@
     .footer-grid{grid-template-columns:1fr;gap:32px;}
     .page-hero h1{font-size:26px;}
   }
+
+  .gal-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px;}
+  .gal-chip{border:1.5px solid var(--line);background:#fff;color:var(--ink);padding:9px 16px;border-radius:999px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:'Inter',sans-serif;}
+  .gal-chip:hover{border-color:var(--green-500);} .gal-chip.on{background:var(--green-600);border-color:var(--green-600);color:#fff;}
+  .gal-chip small{opacity:.75;margin-left:4px;font-weight:600;}
+  .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;}
+  .gal-card{position:relative;border:none;padding:0;cursor:pointer;border-radius:var(--radius-md);overflow:hidden;aspect-ratio:4/3;background:var(--green-100);box-shadow:0 8px 20px -14px rgba(14,42,31,.35);}
+  .gal-card img{width:100%;height:100%;object-fit:cover;transition:transform .35s;display:block;}
+  .gal-card:hover img{transform:scale(1.05);}
+  .gal-card .tag{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);color:var(--green-800);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;}
+  .gal-card .cap{position:absolute;left:0;right:0;bottom:0;padding:34px 14px 12px;text-align:left;color:#fff;background:linear-gradient(transparent,rgba(8,24,17,.82));}
+  .gal-card .cap b{display:block;font-size:13.5px;font-weight:600;line-height:1.3;} .gal-card .cap span{font-size:11.5px;opacity:.85;}
+  .gal-empty{padding:40px 0;color:var(--ink-soft);}
+  .lb{position:fixed;inset:0;z-index:500;background:rgba(6,18,12,.94);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+  .lb.open{display:flex;}
+  .lb img{max-width:min(1100px,100%);max-height:68vh;object-fit:contain;border-radius:8px;}
+  .lb-info{color:#fff;max-width:760px;text-align:center;margin-top:16px;}
+  .lb-info h4{color:#fff;font-size:17px;margin-bottom:6px;} .lb-meta{font-size:13px;color:#B8CFC0;display:flex;gap:6px 16px;justify-content:center;flex-wrap:wrap;}
+  .lb button{position:absolute;background:rgba(255,255,255,.14);border:none;color:#fff;width:46px;height:46px;border-radius:50%;font-size:22px;cursor:pointer;}
+  .lb button:hover{background:rgba(255,255,255,.28);} .lb-x{top:18px;right:18px;} .lb-prev{left:18px;top:50%;} .lb-next{right:18px;top:50%;}
+  .lb-count{position:absolute;top:26px;left:22px;color:#B8CFC0;font-size:13px;}
+  @media (max-width:560px){.gal-grid{grid-template-columns:repeat(2,1fr);gap:10px;}.lb-prev{left:6px}.lb-next{right:6px}}
 </style>
 </head>
 <body>
@@ -148,19 +170,26 @@
 <section class="page-hero">
   <div class="wrap">
     <span class="eyebrow">GALERIE</span>
-    <h1>Le CEMV en images</h1>
+    <h1>Galerie du CEMV</h1>
     <p>Laboratoire, terrain, esp&egrave;ces &eacute;tudi&eacute;es : un aper&ccedil;u visuel des activit&eacute;s du centre.</p>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <div class="section-head">
-      <div><span class="eyebrow">GALERIE</span><h3>Le CEMV en images</h3></div>
-    </div>
-    <div class="gallery-grid" id="gallery-grid"></div>
+    <div class="gal-chips" id="gal-chips"></div>
+    <div class="gal-grid" id="gal-grid"><p class="gal-empty">Chargement de la galerie…</p></div>
   </div>
 </section>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo agrandie">
+  <span class="lb-count" id="lb-count"></span>
+  <button class="lb-x" id="lb-x" aria-label="Fermer">&times;</button>
+  <button class="lb-prev" id="lb-prev" aria-label="Précédente">&#8249;</button>
+  <img id="lb-img" alt="">
+  <button class="lb-next" id="lb-next" aria-label="Suivante">&#8250;</button>
+  <div class="lb-info"><h4 id="lb-cap"></h4><div class="lb-meta" id="lb-meta"></div></div>
+</div>
 
 <footer>
   <div class="wrap">
@@ -212,20 +241,66 @@
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // Affichage public de la galerie, alimentée depuis le même panneau d'administration que la page d'accueil
-  const sb = window.supabase.createClient(
-    'https://ermnggfazzdzcjstjytz.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVybW5nZ2ZhenpkemNqc3RqeXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MTQ0NjMsImV4cCI6MjEwNTM5MDQ2M30.RWRfHftIRHoh9Z6KRrQxW98qbg_mP14hxYfruc5d61Q'
-  );
-  function escHtml(str){ const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+(function(){
+  var CATS=['Laboratoires','Terrain','Formations','Conférences','Missions','Équipements'];
+  var sb=window.supabase.createClient('https://ermnggfazzdzcjstjytz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVybW5nZ2ZhenpkemNqc3RqeXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MTQ0NjMsImV4cCI6MjEwNTM5MDQ2M30.RWRfHftIRHoh9Z6KRrQxW98qbg_mP14hxYfruc5d61Q');
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+  var fmt=function(d){if(!d)return '';var x=new Date(d+'T00:00:00');return isNaN(x)?'':x.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});};
+  var photos=[],projects={},current=[],cat='',idx=0;
+  var grid=document.getElementById('gal-grid'),chips=document.getElementById('gal-chips'),lb=document.getElementById('lb');
 
-  sb.from('gallery').select('*').order('sort_order', { ascending: true }).then(({ data, error }) => {
-    const grid = document.getElementById('gallery-grid');
-    if (!grid || error || !data || data.length === 0) return;
-    grid.innerHTML = data.map((g) =>
-      '<img src="' + g.img + '" alt="' + escHtml(g.caption || 'Photo CEMV') + '">'
-    ).join('');
+  function renderChips(){
+    var c={};photos.forEach(function(p){if(p.category)c[p.category]=(c[p.category]||0)+1;});
+    var html='<button class="gal-chip'+(cat?'':' on')+'" data-cat="">Toutes<small>'+photos.length+'</small></button>';
+    CATS.forEach(function(k){if(c[k])html+='<button class="gal-chip'+(cat===k?' on':'')+'" data-cat="'+esc(k)+'">'+esc(k)+'<small>'+c[k]+'</small></button>';});
+    chips.innerHTML=html;
+  }
+  function renderGrid(){
+    current=photos.filter(function(p){return !cat||p.category===cat;});
+    if(!current.length){grid.innerHTML='<p class="gal-empty">Aucune photo dans cette catégorie pour le moment.</p>';return;}
+    grid.innerHTML=current.map(function(p,i){
+      var sub=[p.place,fmt(p.taken_on)].filter(Boolean).map(esc).join(' · ');
+      return '<button class="gal-card" data-i="'+i+'" aria-label="Agrandir : '+esc(p.caption||'photo')+'"><img loading="lazy" src="'+esc(p.img)+'" alt="'+esc(p.caption||'Photo CEMV')+'">'+
+        (p.category?'<span class="tag">'+esc(p.category)+'</span>':'')+
+        ((p.caption||sub)?'<span class="cap">'+(p.caption?'<b>'+esc(p.caption)+'</b>':'')+(sub?'<span>'+sub+'</span>':'')+'</span>':'')+'</button>';
+    }).join('');
+  }
+  function show(i){
+    idx=(i+current.length)%current.length;var p=current[idx];
+    document.getElementById('lb-img').src=p.img;document.getElementById('lb-img').alt=p.caption||'Photo CEMV';
+    document.getElementById('lb-cap').textContent=p.caption||'';
+    var meta=[];
+    if(p.category)meta.push('📂 '+esc(p.category));
+    if(p.place)meta.push('📍 '+esc(p.place));
+    if(p.taken_on)meta.push('📅 '+esc(fmt(p.taken_on)));
+    if(p.project_id&&projects[p.project_id])meta.push('🔬 Projet : '+esc(projects[p.project_id]));
+    document.getElementById('lb-meta').innerHTML=meta.join('');
+    document.getElementById('lb-count').textContent=(idx+1)+' / '+current.length;
+  }
+  function open(i){show(i);lb.classList.add('open');document.body.style.overflow='hidden';}
+  function close(){lb.classList.remove('open');document.body.style.overflow='';}
+  chips.addEventListener('click',function(e){var b=e.target.closest('[data-cat]');if(!b)return;cat=b.dataset.cat;
+    var u=new URL(location.href);cat?u.searchParams.set('cat',cat):u.searchParams.delete('cat');history.replaceState(null,'',u);renderChips();renderGrid();});
+  grid.addEventListener('click',function(e){var b=e.target.closest('[data-i]');if(b)open(+b.dataset.i);});
+  document.getElementById('lb-x').onclick=close;
+  document.getElementById('lb-prev').onclick=function(){show(idx-1);};
+  document.getElementById('lb-next').onclick=function(){show(idx+1);};
+  lb.addEventListener('click',function(e){if(e.target===lb)close();});
+  document.addEventListener('keydown',function(e){if(!lb.classList.contains('open'))return;
+    if(e.key==='Escape')close();else if(e.key==='ArrowLeft')show(idx-1);else if(e.key==='ArrowRight')show(idx+1);});
+  var sx=null;lb.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
+  lb.addEventListener('touchend',function(e){if(sx===null)return;var d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>50)show(idx+(d<0?1:-1));sx=null;});
+
+  Promise.all([sb.from('gallery').select('*'),sb.from('projects').select('id,title')]).then(function(r){
+    if(r[0].error){grid.innerHTML='<p class="gal-empty">Impossible de charger la galerie pour le moment.</p>';return;}
+    (r[1].data||[]).forEach(function(p){projects[p.id]=p.title;});
+    photos=(r[0].data||[]).filter(function(p){return p.img;}).sort(function(a,b){
+      return String(b.taken_on||'').localeCompare(String(a.taken_on||''))||(b.id-a.id);});
+    if(!photos.length){grid.innerHTML='<p class="gal-empty">La galerie sera bientôt alimentée.</p>';return;}
+    var q=new URLSearchParams(location.search).get('cat');if(q&&CATS.indexOf(q)>-1)cat=q;
+    renderChips();renderGrid();
   });
+})();
 </script>
 </body>
 </html>

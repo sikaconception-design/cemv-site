@@ -731,6 +731,15 @@
     </div>
 
     <div class="admin-tab-panel" id="admin-tab-gallery" style="display:none;">
+      <div class="admin-content-block" style="background:var(--green-50);">
+        <strong style="font-size:14px;">Ajout rapide de photos</strong>
+        <p style="font-size:12.5px;color:var(--ink-soft);margin:4px 0 10px;">Choisissez une catégorie, puis sélectionnez une ou plusieurs photos : elles sont réduites automatiquement, envoyées et enregistrées.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <select id="gallery-bulk-cat" style="padding:9px 11px;border-radius:8px;border:1.5px solid var(--line);"></select>
+          <input type="file" id="gallery-bulk-files" accept="image/*" multiple style="border:1.5px dashed var(--green-500);background:#fff;padding:8px 10px;border-radius:8px;cursor:pointer;">
+        </div>
+        <p id="gallery-bulk-msg" style="font-size:13px;font-weight:600;color:var(--green-700);margin-top:10px;"></p>
+      </div>
       <div id="admin-gallery-list"></div>
       <button type="button" class="btn btn-outline" id="admin-add-gallery" style="margin-top:6px;">+ Ajouter une photo</button>
     </div>
@@ -952,6 +961,7 @@
   <div class="wrap">
     <div class="section-head">
       <div><span class="eyebrow">GALERIE</span><h3>Le CEMV en images</h3></div>
+      <a href="galerie.html" class="btn btn-outline">Voir toute la galerie &rarr;</a>
     </div>
     <div class="gallery-grid-public" id="gallery-grid-public"></div>
   </div>
@@ -1418,6 +1428,32 @@
 
     // ---- Fabrique générique pour les sections simples (Équipe, Partenaires, Publications, Documents) ----
     // Chacune suit le même schéma : liste en mémoire ← Supabase, formulaire d'édition, ajout/suppression immédiate.
+    const GALLERY_CATEGORIES = ['Laboratoires','Terrain','Formations','Conférences','Missions','Équipements'];
+    async function compressImage(file, max, q){
+      return new Promise((res, rej) => {
+        const img = new Image(); const u = URL.createObjectURL(file);
+        img.onload = () => {
+          const s = Math.min(1, max / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(u);
+          c.toBlob((b) => b ? res(b) : rej(new Error('compression impossible')), 'image/jpeg', q);
+        };
+        img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('image illisible')); };
+        img.src = u;
+      });
+    }
+    const blobToDataUrl = (b) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
+    async function uploadMedia(file, folder){
+      const blob = await compressImage(file, 1600, 0.85);
+      const path = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+      const { error } = await sb.storage.from('cemv-media').upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000' });
+      if (!error) return sb.storage.from('cemv-media').getPublicUrl(path).data.publicUrl;
+      console.warn('Stockage indisponible, repli sur une image intégrée :', error.message);
+      return blobToDataUrl(await compressImage(file, 1200, 0.78));
+    }
+
     function makeSimpleSection(opts){
       // opts: { table, listElId, addBtnId, fields: [{key,label,type:'text'|'textarea'|'photo'}], mapFromRow, mapToPayload, blankItem }
       let items = [];
@@ -1453,6 +1489,12 @@
                   '<span>' + escapeHtml(p.title || '(sans titre)') + (p.year ? ' <em style="color:var(--ink-soft);">(' + escapeHtml(p.year) + ')</em>' : '') + '</span></label>'
                 ).join('') : '<p style="font-size:12.5px;color:var(--ink-soft);margin:6px 0;">Aucune publication enregistrée pour le moment (onglet Publications).</p>') +
                 '</div></div>';
+            } else if (f.type === 'select'){
+              const cur = (item[f.key] === null || item[f.key] === undefined) ? '' : String(item[f.key]);
+              fieldsHtml += '<div><label>' + f.label + '</label><select data-sfield="' + f.key + '"><option value="">' + (f.empty || '—') + '</option>' +
+                f.options().map((o) => '<option value="' + escapeHtml(String(o[0])) + '"' + (cur === String(o[0]) ? ' selected' : '') + '>' + escapeHtml(o[1]) + '</option>').join('') + '</select></div>';
+            } else if (f.type === 'date'){
+              fieldsHtml += '<div><label>' + f.label + '</label><input type="date" data-sfield="' + f.key + '" value="' + escapeHtml(item[f.key] || '') + '"></div>';
             } else if (f.type === 'textarea'){
               fieldsHtml += '<div class="full"><label>' + f.label + '</label><textarea data-sfield="' + f.key + '">' + escapeHtml(item[f.key] || '') + '</textarea></div>';
             } else if (f.type === 'slider'){
@@ -1484,17 +1526,14 @@
           });
         });
         list.querySelectorAll('[data-sfield$="file"]').forEach((fileInput) => {
-          fileInput.addEventListener('change', () => {
+          fileInput.addEventListener('change', async () => {
             const file = fileInput.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-              const row = fileInput.closest('.admin-news-item');
-              const key = fileInput.dataset.sfield.replace(/file$/, '');
-              row.querySelector('[data-sfield="' + key + '"]').value = reader.result;
-              row.querySelector('.admin-photo-preview').src = reader.result;
-            };
-            reader.readAsDataURL(file);
+            const row = fileInput.closest('.admin-news-item');
+            const key = fileInput.dataset.sfield.replace(/file$/, '');
+            const url = opts.storageFolder ? await uploadMedia(file, opts.storageFolder) : await blobToDataUrl(file);
+            row.querySelector('[data-sfield="' + key + '"]').value = url;
+            row.querySelector('.admin-photo-preview').src = url;
           });
         });
         // Aperçu en direct quand on colle/tape un lien d'image
@@ -1543,7 +1582,7 @@
         renderAdmin();
       });
 
-      return { load, renderAdmin, collectForm, sync, getItems: () => items };
+      return { load, renderAdmin, collectForm, sync, getItems: () => items, blank: () => Object.assign({}, opts.blankItem) };
     }
 
     const teamSection = makeSimpleSection({
@@ -1621,15 +1660,48 @@
     });
 
     const gallerySection = makeSimpleSection({
-      table: 'gallery', listElId: 'admin-gallery-list', addBtnId: 'admin-add-gallery',
+      table: 'gallery', listElId: 'admin-gallery-list', addBtnId: 'admin-add-gallery', storageFolder: 'gallery',
       fields: [
-        { key: 'caption', label: 'Légende (optionnel)', type: 'text' },
-        { key: 'img', label: 'Photo', type: 'photo' }
+        { key: 'img', label: 'Photo', type: 'photo' },
+        { key: 'caption', label: 'Légende', type: 'text' },
+        { key: 'category', label: 'Catégorie', type: 'select', empty: '— Non classée —', options: () => GALLERY_CATEGORIES.map((c) => [c, c]) },
+        { key: 'place', label: 'Lieu', type: 'text' },
+        { key: 'taken_on', label: 'Date', type: 'date' },
+        { key: 'project_id', label: 'Projet associé', type: 'select', empty: '— Aucun —', options: () => projectsData.filter((p) => typeof p.id === 'number').map((p) => [p.id, p.title || '(projet sans titre)']) }
       ],
-      mapFromRow: (row) => ({ id: row.id, caption: row.caption, img: row.img }),
-      mapToPayload: (item) => ({ caption: item.caption || null, img: item.img || '' }),
-      blankItem: { caption:'', img:'' }
+      mapFromRow: (row) => ({ id: row.id, caption: row.caption, img: row.img, category: row.category, place: row.place, taken_on: row.taken_on, project_id: row.project_id }),
+      mapToPayload: (item) => ({ caption: item.caption || null, img: item.img || '', category: item.category || null, place: item.place || null, taken_on: item.taken_on || null, project_id: item.project_id ? Number(item.project_id) : null }),
+      blankItem: { caption:'', img:'', category:'', place:'', taken_on:'', project_id:'' }
     });
+
+    // ---- Ajout rapide : plusieurs photos d'un coup ----
+    (function(){
+      const bulkFiles = document.getElementById('gallery-bulk-files');
+      const bulkCat = document.getElementById('gallery-bulk-cat');
+      const bulkMsg = document.getElementById('gallery-bulk-msg');
+      if (!bulkFiles) return;
+      bulkCat.innerHTML = '<option value="">— Non classée —</option>' + GALLERY_CATEGORIES.map((c) => '<option>' + c + '</option>').join('');
+      bulkFiles.addEventListener('change', async () => {
+        const files = Array.from(bulkFiles.files);
+        if (!files.length) return;
+        gallerySection.collectForm();
+        const items = gallerySection.getItems();
+        let ok = 0;
+        for (let i = 0; i < files.length; i++){
+          bulkMsg.textContent = 'Envoi ' + (i + 1) + ' / ' + files.length + '…';
+          try {
+            const url = await uploadMedia(files[i], 'gallery');
+            items.unshift(Object.assign({ id: null }, gallerySection.blank(), { img: url, category: bulkCat.value }));
+            ok++;
+          } catch (err) { console.error(err); }
+        }
+        await gallerySection.sync();
+        gallerySection.renderAdmin();
+        renderGalleryPublic();
+        bulkFiles.value = '';
+        bulkMsg.textContent = ok + ' photo(s) ajoutée(s) et enregistrée(s)' + (ok < files.length ? ' — ' + (files.length - ok) + ' échec(s)' : '') + '. Complétez la légende, le lieu, la date et le projet ci-dessous, puis cliquez sur « Enregistrer les modifications ».';
+      });
+    })();
 
     // ---- Affichage public (page d'accueil) : Équipe et Partenaires ----
     function renderTeamPublic(){
@@ -1680,14 +1752,14 @@
     function renderGalleryPublic(){
       const section = document.getElementById('gallery-section');
       const grid = document.getElementById('gallery-grid-public');
-      const items = gallerySection.getItems();
+      const items = gallerySection.getItems().slice().sort((a, b) => String(b.taken_on || '').localeCompare(String(a.taken_on || '')) || (Number(b.id) || 0) - (Number(a.id) || 0)).slice(0, 8);
       if (!section || !grid) return;
       if (items.length === 0) { section.style.display = 'none'; return; }
       section.style.display = '';
       grid.innerHTML = items.map((g) => (
-        '<figure><img src="' + (g.img || fallbackImg) + '" alt="' + escapeHtml(g.caption || 'Photo CEMV') + '">' +
-          (g.caption ? '<figcaption>' + escapeHtml(g.caption) + '</figcaption>' : '') +
-        '</figure>'
+        '<a href="galerie.html' + (g.category ? '?cat=' + encodeURIComponent(g.category) : '') + '" style="display:contents;"><figure><img loading="lazy" src="' + (g.img || fallbackImg) + '" alt="' + escapeHtml(g.caption || 'Photo CEMV') + '">' +
+          ((g.caption || g.category) ? '<figcaption>' + escapeHtml(g.caption || g.category) + '</figcaption>' : '') +
+        '</figure></a>'
       )).join('');
     }
 
