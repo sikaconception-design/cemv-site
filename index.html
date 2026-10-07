@@ -444,6 +444,8 @@
   }
   .tag-recherche{background:#E7F5EC;color:var(--green-700);}
   .tag-evenement{background:#EAF0FF;color:#3454C4;}
+  .tag-formation{background:#FFF3DB;color:#8A5A00;} .tag-publication{background:#F1E9FB;color:#6B3FA0;} .tag-terrain{background:#E1F3F1;color:#0F6B63;}
+  .news-sum{font-size:13px;color:var(--ink-soft);margin:6px 0 10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
   .tag-partenariat{background:#F3E9FF;color:#7B3FCF;}
   .news-body h4{font-size:15.5px;line-height:1.35;margin-bottom:12px;}
   .news-body h4 em{font-style:italic;color:var(--ink-soft);font-size:14px;}
@@ -935,7 +937,7 @@
         <span class="eyebrow" data-i18n="news-eyebrow">ACTUALITÉS &amp; ÉVÉNEMENTS</span>
         <h3 style="font-size:27px;margin-top:8px;font-weight:700;" data-i18n="news-title">Dernières actualités</h3>
       </div>
-      <a href="#" class="btn btn-outline" style="padding:11px 22px;font-size:14px;" data-i18n="news-btn">Voir toutes les actualités →</a>
+      <a href="actualites.html" class="btn btn-outline" style="padding:11px 22px;font-size:14px;" data-i18n="news-btn">Voir toutes les actualités →</a>
     </div>
     <div class="news-grid" id="news-grid"></div>
   </div>
@@ -1226,7 +1228,10 @@
     const tagLabels = {
       recherche: { fr:'Recherche', en:'Research' },
       evenement: { fr:'Événement', en:'Event' },
-      partenariat: { fr:'Partenariat', en:'Partnership' }
+      partenariat: { fr:'Partenariat', en:'Partnership' },
+      formation: { fr:'Formation', en:'Training' },
+      publication: { fr:'Publication', en:'Publication' },
+      terrain: { fr:'Terrain', en:'Fieldwork' }
     };
     const readMore = { fr:'Lire la suite →', en:'Read more →' };
 
@@ -1240,12 +1245,19 @@
     async function loadNewsFromDB(){
       const { data, error } = await sb.from('news').select('*').order('sort_order', { ascending: true });
       if (error || !data || data.length === 0) return JSON.parse(JSON.stringify(defaultNews));
-      return data.map((row) => ({ id: row.id, date: row.date, tag: row.tag, img: row.img, title: row.title }));
+      return data.map((row) => ({ id: row.id, date: row.date, tag: row.tag, img: row.img, title: row.title,
+        published_on: row.published_on || '', summary: row.summary || '', content: row.content || '', author: row.author || '',
+        images: Array.isArray(row.images) ? row.images : [], documents: Array.isArray(row.documents) ? row.documents : [],
+        publication_ids: row.publication_ids || [] }))
+        .sort((a, b) => String(b.published_on).localeCompare(String(a.published_on)) || (Number(b.id) || 0) - (Number(a.id) || 0));
     }
     // Enregistre chaque actualité dans Supabase (insertion pour les nouvelles, mise à jour pour les existantes)
     async function syncNewsToDB(){
       for (const item of newsData) {
-        const payload = { date: item.date, tag: item.tag, img: item.img || null, title: item.title !== undefined ? item.title : (item.fr || '') };
+        const payload = { date: item.date, tag: item.tag, img: item.img || null, title: item.title !== undefined ? item.title : (item.fr || ''),
+          published_on: item.published_on || null, summary: item.summary || null, content: item.content || null, author: item.author || null,
+          images: Array.isArray(item.images) ? item.images : [], documents: Array.isArray(item.documents) ? item.documents : [],
+          publication_ids: (item.publication_ids || []).map(Number) };
         if (typeof item.id === 'number') {
           const { error } = await sb.from('news').update(payload).eq('id', item.id);
           if (error) console.error('Erreur mise à jour actualité :', error.message);
@@ -1269,15 +1281,16 @@
       const lang = window.CEMV_LANG || 'fr';
       const grid = document.getElementById('news-grid');
       if (!grid) return;
-      grid.innerHTML = newsData.map((item) => {
+      grid.innerHTML = newsData.slice(0, 6).map((item) => {
         const title = item.title !== undefined && item.title !== '' ? item.title : (lang === 'en' ? item.en : item.fr);
         const tagInfo = tagLabels[item.tag] || tagLabels.recherche;
         return '<div class="news-card">' +
           '<div class="news-photo"><img src="' + (item.img || fallbackImg) + '" alt="' + escapeHtml(title.replace(/<[^>]+>/g,'')) + '"></div>' +
           '<div class="news-body">' +
             '<div class="news-meta"><span class="news-date">' + escapeHtml(item.date) + '</span><span class="tag tag-' + item.tag + '">' + tagInfo[lang] + '</span></div>' +
-            '<h4>' + title + '</h4>' +
-            '<a href="#" class="news-link">' + readMore[lang] + '</a>' +
+            '<h4>' + (typeof item.id === 'number' ? escapeHtml(title) : title) + '</h4>' +
+            (item.summary ? '<p class="news-sum">' + escapeHtml(item.summary) + '</p>' : '') +
+            '<a href="' + (typeof item.id === 'number' ? 'actualite.html?id=' + item.id : 'actualites.html') + '" class="news-link">' + readMore[lang] + '</a>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -1512,6 +1525,17 @@
       console.warn('Stockage indisponible, repli sur une image intégrée :', error.message);
       return blobToDataUrl(await compressImage(file, 1200, 0.78));
     }
+
+    async function uploadFile(file, folder){
+      if (file.size > 20 * 1024 * 1024) throw new Error('« ' + file.name + ' » dépasse 20 Mo.');
+      const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const path = folder + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const { error } = await sb.storage.from('cemv-media').upload(path, file, { contentType: file.type || 'application/octet-stream' });
+      if (error) throw error;
+      return sb.storage.from('cemv-media').getPublicUrl(path).data.publicUrl;
+    }
+    const NEWS_CATEGORIES = [['recherche','Recherche'],['evenement','Événement'],['partenariat','Partenariat'],['formation','Formation'],['publication','Publication'],['terrain','Terrain']];
+    const fmtShortFr = (d) => { const x = new Date(d + 'T00:00:00'); return isNaN(x) ? '' : x.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); };
 
     function makeSimpleSection(opts){
       // opts: { table, listElId, addBtnId, fields: [{key,label,type:'text'|'textarea'|'photo'}], mapFromRow, mapToPayload, blankItem }
@@ -1834,25 +1858,38 @@
       list.innerHTML = newsData.map((item, idx) => {
         const titleVal = item.title !== undefined ? item.title : item.fr;
         const imgSrc = item.img || fallbackImg;
+        const chosen = (item.publication_ids || []).map(Number);
+        const pubs = publicationsSection.getItems().filter((p) => typeof p.id === 'number');
         return '<div class="admin-news-item" data-idx="' + idx + '">' +
           '<button type="button" class="admin-news-remove" data-remove="' + idx + '" aria-label="Supprimer">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
           '</button>' +
-          '<div><label>Date</label><input type="text" data-field="date" value="' + escapeHtml(item.date) + '"></div>' +
-          '<div><label>Étiquette</label><select data-field="tag">' +
-            '<option value="recherche"' + (item.tag==='recherche'?' selected':'') + '>Recherche</option>' +
-            '<option value="evenement"' + (item.tag==='evenement'?' selected':'') + '>Événement</option>' +
-            '<option value="partenariat"' + (item.tag==='partenariat'?' selected':'') + '>Partenariat</option>' +
-          '</select></div>' +
-          '<div class="full"><label>Titre</label><textarea data-field="title">' + escapeHtml(titleVal.replace(/<[^>]+>/g,'')) + '</textarea></div>' +
+          '<div><label>Date de publication' + (!item.published_on && item.date ? ' (ancienne date : ' + escapeHtml(item.date) + ')' : '') + '</label><input type="date" data-field="published_on" value="' + escapeHtml(item.published_on || '') + '"></div>' +
+          '<div><label>Catégorie</label><select data-field="tag">' + NEWS_CATEGORIES.map((c) => '<option value="' + c[0] + '"' + (item.tag === c[0] ? ' selected' : '') + '>' + c[1] + '</option>').join('') + '</select></div>' +
+          '<div class="full"><label>Titre</label><textarea data-field="title">' + escapeHtml((titleVal || '').replace(/<[^>]+>/g,'')) + '</textarea></div>' +
+          '<div class="full"><label>Auteur</label><input type="text" data-field="author" value="' + escapeHtml(item.author || '') + '" placeholder="ex. Dr Kouassi Aya"></div>' +
+          '<div class="full"><label>Résumé (affiché sur les cartes et en introduction)</label><textarea data-field="summary" style="min-height:70px;">' + escapeHtml(item.summary || '') + '</textarea></div>' +
+          '<div class="full"><label>Contenu complet de l\'article</label><textarea data-field="content" style="min-height:220px;" placeholder="Rédigez votre article ici.">' + escapeHtml(item.content || '') + '</textarea>' +
+            '<p style="font-size:12px;color:var(--ink-soft);margin-top:4px;">Mise en forme : une ligne vide entre les paragraphes · <b>## Titre</b> pour un intertitre · <b>- texte</b> pour une liste · <b>**mot**</b> pour du gras.</p></div>' +
           '<div class="full admin-photo-row">' +
             '<img class="admin-photo-preview" src="' + imgSrc + '" alt="">' +
             '<div style="flex:1;">' +
-              '<label>Photo de l\'actualité</label>' +
-              '<input type="text" data-field="img" value="' + escapeHtml(item.img || '') + '" placeholder="Lien (URL) de la photo, ou téléversez ci-dessous">' +
+              '<label>Image principale</label>' +
+              '<input type="text" data-field="img" value="' + escapeHtml(item.img || '') + '" placeholder="Lien (URL) de l\'image, ou téléversez ci-dessous">' +
               '<input type="file" accept="image/*" data-field="imgfile" style="margin-top:6px;">' +
             '</div>' +
           '</div>' +
+          '<div class="full"><label>Photos de l\'article</label><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">' +
+            (item.images || []).map((u, pi) => '<div style="position:relative;"><img src="' + escapeHtml(u) + '" alt="" style="width:74px;height:56px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line);"><button type="button" data-nrmphoto="' + idx + ':' + pi + '" aria-label="Retirer" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#C0392B;color:#fff;cursor:pointer;font-size:12px;line-height:1;">×</button></div>').join('') + '</div>' +
+            '<input type="file" accept="image/*" multiple data-naddphotos="' + idx + '" style="border:1.5px dashed var(--line);background:var(--green-50);padding:8px 10px;cursor:pointer;"></div>' +
+          '<div class="full"><label>Documents à télécharger (PDF, Word, Excel, PowerPoint, CSV — 20 Mo max)</label>' +
+            (item.documents || []).map((d, di) => '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:13.5px;">📄 <a href="' + escapeHtml(d.url) + '" target="_blank" rel="noopener" style="color:var(--green-700);flex:1;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(d.name) + '</a><button type="button" data-nrmdoc="' + idx + ':' + di + '" style="border:none;background:#FBEAEA;color:#C0392B;border-radius:8px;padding:4px 10px;cursor:pointer;font-weight:700;">Retirer</button></div>').join('') +
+            '<input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv" data-naddocs="' + idx + '" style="border:1.5px dashed var(--line);background:var(--green-50);padding:8px 10px;cursor:pointer;"></div>' +
+          '<div class="full"><label>Publications associées</label>' +
+            '<input type="search" placeholder="Filtrer les publications…" oninput="const q=this.value.toLowerCase();this.nextElementSibling.querySelectorAll(\'label\').forEach(l=>{l.style.display=l.textContent.toLowerCase().includes(q)?\'\':\'none\'})" style="margin-bottom:6px;">' +
+            '<div style="max-height:150px;overflow-y:auto;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;">' +
+            (pubs.length ? pubs.map((p) => '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;margin:6px 0;cursor:pointer;"><input type="checkbox" data-npubs="1" value="' + p.id + '"' + (chosen.indexOf(p.id) > -1 ? ' checked' : '') + ' style="width:auto;margin-top:3px;"><span>' + escapeHtml(p.title || '(sans titre)') + (p.year ? ' <em style="color:var(--ink-soft);">(' + escapeHtml(p.year) + ')</em>' : '') + '</span></label>').join('') : '<p style="font-size:12.5px;color:var(--ink-soft);margin:6px 0;">Aucune publication enregistrée (onglet Publications).</p>') +
+            '</div></div>' +
         '</div>';
       }).join('');
 
@@ -1870,18 +1907,44 @@
       });
 
       list.querySelectorAll('[data-field="imgfile"]').forEach((fileInput) => {
-        fileInput.addEventListener('change', () => {
+        fileInput.addEventListener('change', async () => {
           const file = fileInput.files[0];
           if (!file) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            const row = fileInput.closest('.admin-news-item');
-            row.querySelector('[data-field="img"]').value = reader.result;
-            row.querySelector('.admin-photo-preview').src = reader.result;
-          };
-          reader.readAsDataURL(file);
+          const url = await uploadMedia(file, 'news');
+          const row = fileInput.closest('.admin-news-item');
+          row.querySelector('[data-field="img"]').value = url;
+          row.querySelector('.admin-photo-preview').src = url;
         });
       });
+      list.querySelectorAll('[data-naddphotos]').forEach((inp) => {
+        inp.addEventListener('change', async () => {
+          const idx = parseInt(inp.dataset.naddphotos, 10), files = Array.from(inp.files);
+          if (!files.length) return;
+          collectAdminForm();
+          newsData[idx].images = newsData[idx].images || [];
+          for (const f of files){ try { newsData[idx].images.push(await uploadMedia(f, 'news')); } catch (e) { console.error(e); } }
+          renderAdminList();
+        });
+      });
+      list.querySelectorAll('[data-naddocs]').forEach((inp) => {
+        inp.addEventListener('change', async () => {
+          const idx = parseInt(inp.dataset.naddocs, 10), files = Array.from(inp.files);
+          if (!files.length) return;
+          collectAdminForm();
+          newsData[idx].documents = newsData[idx].documents || [];
+          for (const f of files){
+            try { newsData[idx].documents.push({ name: f.name.replace(/\.[^.]+$/, ''), url: await uploadFile(f, 'news-docs') }); }
+            catch (e) { alert('Envoi impossible : ' + (e.message || e) + '\n(Vérifiez que le script supabase-setup-v7.sql a été exécuté.)'); }
+          }
+          renderAdminList();
+        });
+      });
+      list.querySelectorAll('[data-nrmphoto]').forEach((b) => b.addEventListener('click', () => {
+        const [i, p] = b.dataset.nrmphoto.split(':').map(Number); collectAdminForm(); newsData[i].images.splice(p, 1); renderAdminList();
+      }));
+      list.querySelectorAll('[data-nrmdoc]').forEach((b) => b.addEventListener('click', () => {
+        const [i, p] = b.dataset.nrmdoc.split(':').map(Number); collectAdminForm(); newsData[i].documents.splice(p, 1); renderAdminList();
+      }));
       list.querySelectorAll('.admin-photo-row input[type="text"][data-field="img"]').forEach((urlInput) => {
         urlInput.addEventListener('input', () => {
           const row = urlInput.closest('.admin-news-item');
@@ -1897,7 +1960,13 @@
       document.querySelectorAll('#admin-news-list .admin-news-item').forEach((row) => {
         const idx = parseInt(row.dataset.idx, 10);
         if (!newsData[idx]) return;
-        newsData[idx].date = row.querySelector('[data-field="date"]').value.trim();
+        const po = row.querySelector('[data-field="published_on"]').value;
+        newsData[idx].published_on = po;
+        if (po) newsData[idx].date = fmtShortFr(po);
+        newsData[idx].author = row.querySelector('[data-field="author"]').value.trim();
+        newsData[idx].summary = row.querySelector('[data-field="summary"]').value.trim();
+        newsData[idx].content = row.querySelector('[data-field="content"]').value.replace(/\s+$/, '');
+        newsData[idx].publication_ids = Array.from(row.querySelectorAll('input[data-npubs]:checked')).map((c) => Number(c.value));
         newsData[idx].tag = row.querySelector('[data-field="tag"]').value;
         newsData[idx].title = row.querySelector('[data-field="title"]').value.trim();
         newsData[idx].img = row.querySelector('[data-field="img"]').value.trim();
@@ -1999,6 +2068,8 @@
           renderAdminProjectsList();
           fillContentForm();
         }
+        if (role !== 'admin') await publicationsSection.load();
+        renderAdminList();
         adminSaveConfirm.style.display = 'none';
         adminPanelOverlay.classList.add('open');
       document.body.classList.add('admin-open');
@@ -2196,7 +2267,7 @@
 
     adminAddBtn.addEventListener('click', () => {
       collectAdminForm();
-      newsData.push({ id: null, date:'', tag:'recherche', img:'', title:'' });
+      newsData.unshift({ id: null, date: '', tag: 'recherche', img: '', title: '', published_on: new Date().toISOString().slice(0, 10), summary: '', content: '', author: '', images: [], documents: [], publication_ids: [] });
       renderAdminList();
     });
 
