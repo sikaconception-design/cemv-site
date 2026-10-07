@@ -683,9 +683,11 @@
     </div>
 
     <div id="admin-pending-banner" role="button" tabindex="0" style="display:none;cursor:pointer;background:#FFF3DB;border:1.5px solid #E8C879;color:#8A5A00;font-weight:700;font-size:13.5px;padding:12px 16px;border-radius:10px;margin-bottom:16px;"></div>
+    <div id="admin-msg-banner" role="button" tabindex="0" style="display:none;cursor:pointer;background:#E8F1FB;border:1.5px solid #9DBCE3;color:#24508A;font-weight:700;font-size:13.5px;padding:12px 16px;border-radius:10px;margin-bottom:16px;"></div>
     <div class="admin-tabs" role="tablist">
       <button type="button" class="admin-tab active" data-tab="news">Actualités</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-registrations" data-tab="registrations">Inscriptions</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-messages" data-tab="messages">Messages</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-projects" data-tab="projects">Projets</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-team" data-tab="team">Équipe</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-partners" data-tab="partners">Partenaires</button>
@@ -748,6 +750,11 @@
     <div class="admin-tab-panel" id="admin-tab-registrations" style="display:none;">
       <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;">Les chercheurs inscrits depuis le site apparaissent ici. Ils ne peuvent publier qu'après votre approbation.</p>
       <div id="admin-registrations-list"></div>
+    </div>
+
+    <div class="admin-tab-panel" id="admin-tab-messages" style="display:none;">
+      <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;">Messages envoyés depuis le formulaire de contact du site.</p>
+      <div id="admin-messages-list"></div>
     </div>
 
     <div class="admin-tab-panel" id="admin-tab-content" style="display:none;">
@@ -1947,7 +1954,7 @@
       adminPassInput.type = adminPassInput.type === 'password' ? 'text' : 'password';
     });
 
-    const ADMIN_ONLY_TABS = ['registrations', 'projects', 'team', 'partners', 'publications', 'documents', 'domains', 'gallery', 'content'];
+    const ADMIN_ONLY_TABS = ['registrations', 'messages', 'projects', 'team', 'partners', 'publications', 'documents', 'domains', 'gallery', 'content'];
 
     function applyRolePermissions(){
       const badge = document.getElementById('admin-role-badge');
@@ -1977,7 +1984,7 @@
 
     async function enterAdmin(role){
         currentRole = role;
-        if (role === 'admin') loadRegistrations();
+        if (role === 'admin') { loadRegistrations(); loadMessages(); }
         adminLoginOverlay.classList.remove('open');
         renderAdminList();
         if (role === 'admin') {
@@ -2095,6 +2102,44 @@
     document.getElementById('admin-pending-banner').addEventListener('click', () => regTabBtn.click());
     setInterval(() => { if (currentRole === 'admin' && adminPanelOverlay.classList.contains('open')) loadRegistrations(); }, 60000);
 
+    // ---- Messages du formulaire de contact (administrateur) ----
+    const msgList = document.getElementById('admin-messages-list');
+    const msgTabBtn = document.getElementById('admin-tab-btn-messages');
+    async function loadMessages(){
+      msgList.innerHTML = '<p style="color:var(--ink-soft);font-size:13.5px;">Chargement…</p>';
+      const { data, error } = await sb.from('contact_messages').select('*').order('created_at', { ascending: false });
+      if (error){ msgList.innerHTML = '<p style="color:#C0392B;font-size:13.5px;">Impossible de charger les messages : ' + escapeHtml(error.message) + '</p>'; return; }
+      const unread = (data || []).filter((m) => !m.is_read).length;
+      msgTabBtn.textContent = 'Messages' + (unread ? ' (' + unread + ')' : '');
+      const banner = document.getElementById('admin-msg-banner');
+      if (unread){ banner.textContent = '✉️ ' + unread + (unread > 1 ? ' nouveaux messages' : ' nouveau message') + ' du formulaire de contact — cliquez ici pour les lire'; banner.style.display = 'block'; }
+      else banner.style.display = 'none';
+      msgList.innerHTML = (data || []).length ? data.map((m) =>
+        '<div class="admin-news-item" style="' + (m.is_read ? '' : 'border-left:4px solid var(--green-500);') + '">' +
+          '<div class="full"><strong style="font-size:14.5px;">' + escapeHtml(m.name) + '</strong> ' +
+          '<a href="mailto:' + escapeHtml(m.email) + '" style="color:var(--green-700);font-size:13px;">' + escapeHtml(m.email) + '</a>' +
+          '<span style="float:right;font-size:12px;color:var(--ink-soft);">' + new Date(m.created_at).toLocaleString('fr-FR') + (m.is_read ? '' : ' · <b style="color:var(--green-700);">Nouveau</b>') + '</span></div>' +
+          '<div class="full" style="white-space:pre-wrap;font-size:14px;line-height:1.6;">' + escapeHtml(m.message) + '</div>' +
+          '<div class="full" style="display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<a class="btn btn-primary" style="padding:7px 14px;font-size:12.5px;" href="mailto:' + escapeHtml(m.email) + '?subject=' + encodeURIComponent('Re : votre message au CEMV') + '">Répondre</a>' +
+            (m.is_read ? '' : '<button type="button" class="btn btn-outline" style="padding:7px 14px;font-size:12.5px;" data-msg="' + m.id + '" data-act="read">Marquer comme lu</button>') +
+            '<button type="button" class="btn btn-outline" style="padding:7px 14px;font-size:12.5px;color:#C0392B;" data-msg="' + m.id + '" data-act="del">Supprimer</button>' +
+          '</div></div>').join('') : '<p style="color:var(--ink-soft);font-size:13.5px;">Aucun message pour le moment.</p>';
+    }
+    msgList.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-msg]');
+      if (!b || currentRole !== 'admin') return;
+      if (b.dataset.act === 'del' && !confirm('Supprimer ce message définitivement ?')) return;
+      b.disabled = true;
+      const q = b.dataset.act === 'del' ? sb.from('contact_messages').delete().eq('id', b.dataset.msg) : sb.from('contact_messages').update({ is_read: true }).eq('id', b.dataset.msg);
+      const { error } = await q;
+      if (error) alert('Action refusée : ' + error.message);
+      loadMessages();
+    });
+    msgTabBtn.addEventListener('click', loadMessages);
+    document.getElementById('admin-msg-banner').addEventListener('click', () => msgTabBtn.click());
+    setInterval(() => { if (currentRole === 'admin' && adminPanelOverlay.classList.contains('open')) loadMessages(); }, 60000);
+
     const adminLoginSubmitBtn = adminLoginForm.querySelector('button[type="submit"]');
 
     adminLoginForm.addEventListener('submit', async (e) => {
@@ -2200,7 +2245,8 @@
       domains: document.getElementById('admin-tab-domains'),
       gallery: document.getElementById('admin-tab-gallery'),
       content: document.getElementById('admin-tab-content'),
-      registrations: document.getElementById('admin-tab-registrations')
+      registrations: document.getElementById('admin-tab-registrations'),
+      messages: document.getElementById('admin-tab-messages')
     };
     tabButtons.forEach((btn) => {
       btn.addEventListener('click', () => {

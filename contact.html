@@ -134,6 +134,7 @@
       <a href="index.html">Accueil</a>
       <a href="le-cemv.html">Le CEMV</a>
       <a href="recherche.html">Recherche</a>
+      <a href="projets.html">Projets</a>
       <a href="publications.html">Publications</a>
       <a href="nos-domaines.html">Nos domaines</a>
       <a href="actualites.html">Actualités</a>
@@ -166,14 +167,16 @@
       </ul>
     </div>
     <div>
-      <form class="contact-form" onsubmit="event.preventDefault();alert('Merci, votre message a bien &eacute;t&eacute; not&eacute; (d&eacute;monstration).');this.reset();">
+      <form class="contact-form" id="contact-form" novalidate>
         <label>Nom complet</label>
-        <input type="text" placeholder="Votre nom" required>
+        <input type="text" id="cf-name" placeholder="Votre nom" required maxlength="120" autocomplete="name">
         <label>Adresse e-mail</label>
-        <input type="email" placeholder="vous@exemple.com" required>
+        <input type="email" id="cf-email" placeholder="vous@exemple.com" required maxlength="200" autocomplete="email">
         <label>Message</label>
-        <textarea placeholder="Votre message..." required></textarea>
-        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Envoyer le message</button>
+        <textarea id="cf-msg" placeholder="Votre message..." required maxlength="5000"></textarea>
+        <input type="text" id="cf-hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
+        <p id="cf-status" role="status" style="display:none;font-size:14px;font-weight:600;padding:12px 14px;border-radius:10px;margin:0 0 12px;"></p>
+        <button type="submit" id="cf-btn" class="btn btn-primary" style="width:100%;justify-content:center;">Envoyer le message</button>
       </form>
     </div>
   </div>
@@ -227,5 +230,27 @@
     </div>
   </div>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  var sb=window.supabase.createClient('https://ermnggfazzdzcjstjytz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVybW5nZ2ZhenpkemNqc3RqeXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MTQ0NjMsImV4cCI6MjEwNTM5MDQ2M30.RWRfHftIRHoh9Z6KRrQxW98qbg_mP14hxYfruc5d61Q');
+  var f=document.getElementById('contact-form'),st=document.getElementById('cf-status'),btn=document.getElementById('cf-btn');
+  function say(t,ok){st.textContent=t;st.style.display='block';st.style.background=ok?'var(--green-100)':'#FBEAEA';st.style.color=ok?'var(--green-700)':'#C0392B';}
+  f.addEventListener('submit',async function(e){
+    e.preventDefault();
+    var name=document.getElementById('cf-name').value.trim(),email=document.getElementById('cf-email').value.trim(),msg=document.getElementById('cf-msg').value.trim();
+    if(!name||!msg){say('Merci de renseigner votre nom et votre message.',false);return;}
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){say('Adresse e-mail invalide.',false);return;}
+    if(document.getElementById('cf-hp').value){f.reset();say('Merci, votre message a bien été envoyé.',true);return;}
+    if(Date.now()-(+sessionStorage.getItem('cf-last')||0)<30000){say('Veuillez patienter quelques secondes avant un nouvel envoi.',false);return;}
+    btn.disabled=true;btn.textContent='Envoi…';
+    var r=await sb.from('contact_messages').insert({name:name,email:email,message:msg});
+    btn.disabled=false;btn.textContent='Envoyer le message';
+    if(r.error){say("Votre message n'a pas pu être envoyé. Écrivez-nous à contact@cemv.ci.",false);return;}
+    sessionStorage.setItem('cf-last',Date.now());f.reset();
+    say('Merci, votre message a bien été envoyé. L\'équipe du CEMV vous répondra rapidement.',true);
+  });
+})();
+</script>
 </body>
 </html>
