@@ -569,6 +569,7 @@
       <a href="index.html" class="active" data-i18n="nav-accueil">Accueil</a>
       <a href="le-cemv.html" data-i18n="nav-cemv">Le CEMV</a>
       <a href="recherche.html" data-i18n="nav-recherche">Recherche</a>
+      <a href="projets.html" data-i18n="nav-projets">Projets</a>
       <a href="publications.html" data-i18n="nav-publications">Publications</a>
       <a href="nos-domaines.html" data-i18n="nav-domaines">Nos domaines</a>
       <a href="actualites.html" data-i18n="nav-actualites">Actualités</a>
@@ -1075,6 +1076,7 @@
       "nav-accueil": "Home",
       "nav-cemv": "About CEMV",
       "nav-recherche": "Research",
+      "nav-projets": "Projects",
       "nav-publications": "Publications",
       "nav-domaines": "Our fields",
       "nav-actualites": "News",
@@ -1306,11 +1308,17 @@
     async function loadProjectsFromDB(){
       const { data, error } = await sb.from('projects').select('*').order('sort_order', { ascending: true });
       if (error || !data || data.length === 0) return JSON.parse(JSON.stringify(defaultProjects));
-      return data.map((row) => ({ id: row.id, title: row.title, desc: row.description, img: row.img }));
+      return data.map((row) => ({ id: row.id, title: row.title, desc: row.description, img: row.img,
+        status: row.status || 'en_cours', lead: row.lead, partners: row.partners, funding: row.funding,
+        start_date: row.start_date, end_date: row.end_date, objectives: row.objectives, results: row.results,
+        photos: Array.isArray(row.photos) ? row.photos : [], publication_ids: row.publication_ids || [] }));
     }
     async function syncProjectsToDB(){
       for (const item of projectsData) {
-        const payload = { title: item.title, description: item.desc, img: item.img || null };
+        const payload = { title: item.title, description: item.desc, img: item.img || null,
+          status: item.status || 'en_cours', lead: item.lead || null, partners: item.partners || null, funding: item.funding || null,
+          start_date: item.start_date || null, end_date: item.end_date || null, objectives: item.objectives || null, results: item.results || null,
+          photos: Array.isArray(item.photos) ? item.photos : [], publication_ids: (item.publication_ids || []).map(Number) };
         if (typeof item.id === 'number') {
           const { error } = await sb.from('projects').update(payload).eq('id', item.id);
           if (error) console.error('Erreur mise à jour projet :', error.message);
@@ -1335,18 +1343,19 @@
           '<span class="eyebrow">PROJET PHARE</span>' +
           '<h3>' + first.title + '</h3>' +
           '<p>' + first.desc + '</p>' +
+          '<p style="margin-top:16px;"><a href="' + (typeof first.id === 'number' ? 'projet.html?id=' + first.id : 'projets.html') + '" class="btn btn-primary" style="padding:11px 20px;font-size:14px;">Voir la fiche du projet &rarr;</a> <a href="projets.html" style="margin-left:14px;font-weight:600;font-size:14px;color:var(--green-700);">Tous nos projets</a></p>' +
         '</div>' +
         '<div class="featured-photo"><img src="' + (first.img || fallbackImg) + '" alt=""></div>' +
       '</div></div>';
 
       if (rest.length > 0) {
         html += '<div class="more-projects"><div class="wrap">' +
-          '<div class="section-head"><div><span class="eyebrow">AUTRES PROJETS</span><h3 style="font-size:24px;margin-top:8px;font-weight:700;">Nos autres projets en cours</h3></div></div>' +
+          '<div class="section-head"><div><span class="eyebrow">AUTRES PROJETS</span><h3 style="font-size:24px;margin-top:8px;font-weight:700;">Nos autres projets en cours</h3></div><a href="projets.html" class="btn btn-outline">Tous nos projets &rarr;</a></div>' +
           '<div class="project-grid">' +
           rest.map((p) => (
             '<div class="project-card">' +
               '<div class="project-photo"><img src="' + (p.img || fallbackImg) + '" alt=""></div>' +
-              '<div class="project-body"><h4>' + p.title + '</h4><p>' + p.desc + '</p></div>' +
+              '<div class="project-body"><h4>' + p.title + '</h4><p>' + p.desc + '</p>' + (typeof p.id === 'number' ? '<a href="projet.html?id=' + p.id + '" style="display:inline-block;margin-top:10px;font-weight:700;font-size:13px;color:var(--green-700);">Voir la fiche &rarr;</a>' : '') + '</div>' +
             '</div>'
           )).join('') +
           '</div></div></div>';
@@ -1364,7 +1373,29 @@
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
           '</button>' +
           '<div class="full"><label>Titre du projet</label><textarea data-pfield="title">' + escapeHtml(item.title) + '</textarea></div>' +
-          '<div class="full"><label>Description</label><textarea data-pfield="desc">' + escapeHtml(item.desc) + '</textarea></div>' +
+          '<div class="full"><label>Description courte (affichée sur les cartes)</label><textarea data-pfield="desc">' + escapeHtml(item.desc) + '</textarea></div>' +
+          '<div><label>Statut</label><select data-pfield="status">' + [['en_cours','En cours'],['termine','Terminé'],['a_venir','À venir']].map((s) => '<option value="' + s[0] + '"' + ((item.status || 'en_cours') === s[0] ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select></div>' +
+          '<div><label>Responsable du projet</label><input type="text" data-pfield="lead" value="' + escapeHtml(item.lead || '') + '"></div>' +
+          '<div><label>Date de début</label><input type="date" data-pfield="start_date" value="' + escapeHtml(item.start_date || '') + '"></div>' +
+          '<div><label>Date de fin</label><input type="date" data-pfield="end_date" value="' + escapeHtml(item.end_date || '') + '"></div>' +
+          '<div class="full"><label>Partenaires (séparés par des virgules)</label><input type="text" data-pfield="partners" value="' + escapeHtml(item.partners || '') + '"></div>' +
+          '<div class="full"><label>Financement</label><input type="text" data-pfield="funding" value="' + escapeHtml(item.funding || '') + '"></div>' +
+          '<div class="full"><label>Objectifs (une ligne par objectif)</label><textarea data-pfield="objectives" style="min-height:80px;">' + escapeHtml(item.objectives || '') + '</textarea></div>' +
+          '<div class="full"><label>Résultats</label><textarea data-pfield="results" style="min-height:80px;">' + escapeHtml(item.results || '') + '</textarea></div>' +
+          '<div class="full"><label>Photos du projet (en plus de la photo principale)</label>' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">' +
+            (item.photos || []).map((u, pi) => '<div style="position:relative;"><img src="' + escapeHtml(u) + '" alt="" style="width:74px;height:56px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line);">' +
+              '<button type="button" data-rmphoto="' + idx + ':' + pi + '" aria-label="Retirer" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#C0392B;color:#fff;cursor:pointer;font-size:12px;line-height:1;">×</button></div>').join('') + '</div>' +
+            '<input type="file" accept="image/*" multiple data-addphotos="' + idx + '" style="border:1.5px dashed var(--line);background:var(--green-50);padding:8px 10px;cursor:pointer;"></div>' +
+          '<div class="full"><label>Publications associées</label>' +
+            '<input type="search" placeholder="Filtrer les publications…" oninput="const q=this.value.toLowerCase();this.nextElementSibling.querySelectorAll(\'label\').forEach(l=>{l.style.display=l.textContent.toLowerCase().includes(q)?\'\':\'none\'})" style="margin-bottom:6px;">' +
+            '<div style="max-height:170px;overflow-y:auto;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;">' +
+            (function(){
+              const pubs = publicationsSection.getItems().filter((p) => typeof p.id === 'number');
+              const chosen = (item.publication_ids || []).map(Number);
+              return pubs.length ? pubs.map((p) => '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;margin:6px 0;cursor:pointer;"><input type="checkbox" data-ppubs="1" value="' + p.id + '"' + (chosen.indexOf(p.id) > -1 ? ' checked' : '') + ' style="width:auto;margin-top:3px;"><span>' + escapeHtml(p.title || '(sans titre)') + (p.year ? ' <em style="color:var(--ink-soft);">(' + escapeHtml(p.year) + ')</em>' : '') + '</span></label>').join('') : '<p style="font-size:12.5px;color:var(--ink-soft);margin:6px 0;">Aucune publication enregistrée (onglet Publications).</p>';
+            })() +
+            '</div></div>' +
           '<div class="full admin-photo-row">' +
             '<img class="admin-photo-preview" src="' + (item.img || fallbackImg) + '" alt="">' +
             '<div style="flex:1;">' +
@@ -1389,16 +1420,32 @@
         });
       });
       list.querySelectorAll('[data-pfield="imgfile"]').forEach((fileInput) => {
-        fileInput.addEventListener('change', () => {
+        fileInput.addEventListener('change', async () => {
           const file = fileInput.files[0];
           if (!file) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            const row = fileInput.closest('.admin-news-item');
-            row.querySelector('[data-pfield="img"]').value = reader.result;
-            row.querySelector('.admin-photo-preview').src = reader.result;
-          };
-          reader.readAsDataURL(file);
+          const url = await uploadMedia(file, 'projects');
+          const row = fileInput.closest('.admin-news-item');
+          row.querySelector('[data-pfield="img"]').value = url;
+          row.querySelector('.admin-photo-preview').src = url;
+        });
+      });
+      list.querySelectorAll('[data-addphotos]').forEach((inp) => {
+        inp.addEventListener('change', async () => {
+          const idx = parseInt(inp.dataset.addphotos, 10);
+          const files = Array.from(inp.files);
+          if (!files.length) return;
+          collectAdminProjectsForm();
+          projectsData[idx].photos = projectsData[idx].photos || [];
+          for (const f of files){ try { projectsData[idx].photos.push(await uploadMedia(f, 'projects')); } catch (e) { console.error(e); } }
+          renderAdminProjectsList();
+        });
+      });
+      list.querySelectorAll('[data-rmphoto]').forEach((b) => {
+        b.addEventListener('click', () => {
+          const [i, p] = b.dataset.rmphoto.split(':').map(Number);
+          collectAdminProjectsForm();
+          projectsData[i].photos.splice(p, 1);
+          renderAdminProjectsList();
         });
       });
       list.querySelectorAll('.admin-photo-row input[type="text"][data-pfield="img"]').forEach((urlInput) => {
@@ -1417,12 +1464,17 @@
         projectsData[idx].title = row.querySelector('[data-pfield="title"]').value.trim();
         projectsData[idx].desc = row.querySelector('[data-pfield="desc"]').value.trim();
         projectsData[idx].img = row.querySelector('[data-pfield="img"]').value.trim();
+        ['status','lead','partners','funding','start_date','end_date','objectives','results'].forEach((k) => {
+          const el = row.querySelector('[data-pfield="' + k + '"]');
+          if (el) projectsData[idx][k] = el.value.trim();
+        });
+        projectsData[idx].publication_ids = Array.from(row.querySelectorAll('input[data-ppubs]:checked')).map((c) => Number(c.value));
       });
     }
 
     document.getElementById('admin-add-project').addEventListener('click', () => {
       collectAdminProjectsForm();
-      projectsData.push({ id: null, title: '', desc: '', img: '' });
+      projectsData.push({ id: null, title: '', desc: '', img: '', status: 'en_cours', lead: '', partners: '', funding: '', start_date: '', end_date: '', objectives: '', results: '', photos: [], publication_ids: [] });
       renderAdminProjectsList();
     });
 
@@ -1937,6 +1989,7 @@
           documentsSection.renderAdmin();
           domainsSection.renderAdmin();
           gallerySection.renderAdmin();
+          renderAdminProjectsList();
           fillContentForm();
         }
         adminSaveConfirm.style.display = 'none';
