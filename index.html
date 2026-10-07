@@ -572,6 +572,7 @@
       <a href="le-cemv.html" data-i18n="nav-cemv">Le CEMV</a>
       <a href="recherche.html" data-i18n="nav-recherche">Recherche</a>
       <a href="projets.html" data-i18n="nav-projets">Projets</a>
+      <a href="vecteurs.html" data-i18n="nav-vecteurs">Vecteurs</a>
       <a href="publications.html" data-i18n="nav-publications">Publications</a>
       <a href="nos-domaines.html" data-i18n="nav-domaines">Nos domaines</a>
       <a href="actualites.html" data-i18n="nav-actualites">Actualités</a>
@@ -697,6 +698,7 @@
       <button type="button" class="admin-tab" id="admin-tab-btn-documents" data-tab="documents">Documents</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-domains" data-tab="domains">Domaines de recherche</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-gallery" data-tab="gallery">Galerie</button>
+      <button type="button" class="admin-tab" id="admin-tab-btn-vectors" data-tab="vectors">Vecteurs</button>
       <button type="button" class="admin-tab" id="admin-tab-btn-content" data-tab="content">Contenu du site (hero &amp; à propos)</button>
     </div>
 
@@ -747,6 +749,12 @@
       </div>
       <div id="admin-gallery-list"></div>
       <button type="button" class="btn btn-outline" id="admin-add-gallery" style="margin-top:6px;">+ Ajouter une photo</button>
+    </div>
+
+    <div class="admin-tab-panel" id="admin-tab-vectors" style="display:none;">
+      <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;">Encyclopédie des vecteurs : une fiche par genre ou espèce (moustiques, tiques, mouches…). Dans les champs « Maladies » et « Espèces », saisissez un élément par ligne.</p>
+      <div id="admin-vectors-list"></div>
+      <button type="button" class="btn btn-outline" id="admin-add-vector" style="margin-top:6px;">+ Ajouter une fiche vecteur</button>
     </div>
 
     <div class="admin-tab-panel" id="admin-tab-registrations" style="display:none;">
@@ -1086,6 +1094,7 @@
       "nav-cemv": "About CEMV",
       "nav-recherche": "Research",
       "nav-projets": "Projects",
+      "nav-vecteurs": "Vectors",
       "nav-publications": "Publications",
       "nav-domaines": "Our fields",
       "nav-actualites": "News",
@@ -1757,6 +1766,30 @@
       blankItem: { caption:'', img:'', category:'', place:'', taken_on:'', project_id:'' }
     });
 
+    const VECTOR_GROUPS = ['Moustiques','Tiques','Mouches','Phlébotomes','Punaises','Puces','Poux','Autres'];
+    const vectorsSection = makeSimpleSection({
+      table: 'vectors', listElId: 'admin-vectors-list', addBtnId: 'admin-add-vector', storageFolder: 'vectors',
+      pubSource: () => publicationsSection.getItems(),
+      fields: [
+        { key: 'photo', label: 'Photo', type: 'photo' },
+        { key: 'name', label: 'Nom scientifique (genre ou espèce)', type: 'text' },
+        { key: 'common_name', label: 'Nom courant (ex. Anophèle)', type: 'text' },
+        { key: 'group_name', label: 'Groupe', type: 'select', empty: '— Choisir —', options: () => VECTOR_GROUPS.map((g) => [g, g]) },
+        { key: 'family', label: 'Famille (ex. Culicidae)', type: 'text' },
+        { key: 'species', label: 'Espèces importantes (une par ligne)', type: 'textarea' },
+        { key: 'summary', label: 'Résumé (affiché sur la carte)', type: 'textarea' },
+        { key: 'identification', label: '🔬 Identification', type: 'textarea' },
+        { key: 'distribution', label: '🌍 Distribution', type: 'textarea' },
+        { key: 'diseases', label: '🦠 Maladies transmises (une par ligne)', type: 'textarea' },
+        { key: 'hosts', label: '🐄 Hôtes', type: 'textarea' },
+        { key: 'characteristics', label: '🔎 Caractéristiques (biologie, comportement, gîtes)', type: 'textarea' },
+        { key: 'publication_ids', label: '📚 Publications associées', type: 'pubs' }
+      ],
+      mapFromRow: (r) => ({ id: r.id, photo: r.photo, name: r.name, common_name: r.common_name, group_name: r.group_name, family: r.family, species: r.species, summary: r.summary, identification: r.identification, distribution: r.distribution, diseases: r.diseases, hosts: r.hosts, characteristics: r.characteristics, publication_ids: r.publication_ids || [] }),
+      mapToPayload: (i) => ({ photo: i.photo || null, name: i.name || '', common_name: i.common_name || null, group_name: i.group_name || 'Autres', family: i.family || null, species: i.species || null, summary: i.summary || null, identification: i.identification || null, distribution: i.distribution || null, diseases: i.diseases || null, hosts: i.hosts || null, characteristics: i.characteristics || null, publication_ids: (i.publication_ids || []).map(Number) }),
+      blankItem: { photo:'', name:'', common_name:'', group_name:'', family:'', species:'', summary:'', identification:'', distribution:'', diseases:'', hosts:'', characteristics:'', publication_ids:[] }
+    });
+
     // ---- Ajout rapide : plusieurs photos d'un coup ----
     (function(){
       const bulkFiles = document.getElementById('gallery-bulk-files');
@@ -2069,6 +2102,8 @@
           fillContentForm();
         }
         if (role !== 'admin') await publicationsSection.load();
+        await vectorsSection.load();
+        vectorsSection.renderAdmin();
         renderAdminList();
         adminSaveConfirm.style.display = 'none';
         adminPanelOverlay.classList.add('open');
@@ -2291,6 +2326,7 @@
         renderDomainsPublic();
         renderGalleryPublic();
       }
+      vectorsSection.collectForm(); await vectorsSection.sync(); vectorsSection.renderAdmin();
       adminSaveBtn.disabled = false;
       adminSaveConfirm.style.display = 'block';
       setTimeout(() => { adminSaveConfirm.style.display = 'none'; }, 2500);
@@ -2316,6 +2352,7 @@
       domains: document.getElementById('admin-tab-domains'),
       gallery: document.getElementById('admin-tab-gallery'),
       content: document.getElementById('admin-tab-content'),
+      vectors: document.getElementById('admin-tab-vectors'),
       registrations: document.getElementById('admin-tab-registrations'),
       messages: document.getElementById('admin-tab-messages')
     };
